@@ -261,16 +261,22 @@ class DictDataService:
         :param redis: redis对象
         :return:
         """
-        # 获取以sys_dict:开头的键列表
+        # 1) 先清理历史缓存，确保后续写入的是最新快照
+        # 获取以sys_dict:开头的键列表（形如：sys_dict:user_sex、sys_dict:sys_normal_disable 等）
         keys = await redis.keys(f'{RedisInitKeyConfig.SYS_DICT.key}:*')
-        # 删除匹配的键
+        # 删除匹配的键，避免脏数据干扰后续读取
         if keys:
             await redis.delete(*keys)
+        # 2) 从数据库查询所有启用状态的字典类型
         dict_type_all = await DictTypeDao.get_all_dict_type(query_db)
         for dict_type_obj in [item for item in dict_type_all if item.status == '0']:
             dict_type = dict_type_obj.dict_type
+            # 3) 逐个字典类型从数据库查询其字典数据列表
             dict_data_list = await DictDataDao.query_dict_data_list(query_db, dict_type)
+            # 将查询结果转换为驼峰键并过滤掉可能为 None 的条目
             dict_data = [CamelCaseUtil.transform_result(row) for row in dict_data_list if row]
+            # 4) 以 sys_dict:{dict_type} 为 key，把整类字典一次性写入 Redis，值为 JSON 字符串
+            #    这样前端/其他服务可通过该 key 直接获取整类字典，减少数据库压力
             await redis.set(
                 f'{RedisInitKeyConfig.SYS_DICT.key}:{dict_type}',
                 json.dumps(dict_data, ensure_ascii=False, default=str),
