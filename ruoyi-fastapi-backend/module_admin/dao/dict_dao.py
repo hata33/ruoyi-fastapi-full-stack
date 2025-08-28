@@ -53,12 +53,18 @@ class DictTypeDao:
     async def get_all_dict_type(cls, db: AsyncSession):
         """
         获取所有的字典类型信息
+        
+        调用链路：
+        init_cache_sys_dict_services -> DictTypeDao.get_all_dict_type -> SQLAlchemy 查询所有字典类型
+        -> list_format_datetime 格式化时间字段 -> 返回完整字典类型列表 
 
         :param db: orm对象
-        :return: 字典类型信息列表对象
+        :return: 字典类型信息列表对象，时间字段已格式化
         """
+        # 执行查询获取所有字典类型记录
         dict_type_info = (await db.execute(select(SysDictType))).scalars().all()
 
+        # 使用工具函数格式化结果中的时间字段，便于前端展示
         return list_format_datetime(dict_type_info)
 
     @classmethod
@@ -179,6 +185,10 @@ class DictDataDao:
         """
         根据查询参数获取字典数据列表信息
 
+        调用链路：
+        Controller(字典数据分页/列表接口) -> Service.get_dict_data_list_services
+        -> Dao.get_dict_data_list -> SQLAlchemy 构建查询 -> PageUtil.paginate -> 返回数据
+
         :param db: orm对象
         :param query_object: 查询参数对象
         :param is_page: 是否开启分页
@@ -201,7 +211,13 @@ class DictDataDao:
     @classmethod
     async def query_dict_data_list(cls, db: AsyncSession, dict_type: str):
         """
-        根据查询参数获取字典数据列表信息
+        根据字典类型获取启用状态的字典数据列表（非分页）
+
+        调用链路：
+        Service.query_dict_data_list_services -> Dao.query_dict_data_list
+        -> 以 SysDictType 为主表，限定类型启用（status='0'）
+           左连接 SysDictData 并限定数据启用（status='0'）
+           最终返回该类型下的有效字典数据列表
 
         :param db: orm对象
         :param dict_type: 字典类型

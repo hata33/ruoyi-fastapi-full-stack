@@ -230,6 +230,10 @@ class DictDataService:
         """
         获取字典数据列表信息service
 
+        调用链路（查询分页/列表场景）：
+        前端 -> Controller(字典数据列表接口) -> Service.get_dict_data_list_services
+        -> Dao.get_dict_data_list -> 数据库 -> 返回分页/列表数据
+
         :param query_db: orm对象
         :param query_object: 查询参数对象
         :param is_page: 是否开启分页
@@ -242,7 +246,11 @@ class DictDataService:
     @classmethod
     async def query_dict_data_list_services(cls, query_db: AsyncSession, dict_type: str):
         """
-        获取字典数据列表信息service
+        获取某个字典类型下（启用状态）的字典数据列表service（非分页）
+
+        调用链路（按类型查询启用字典数据）：
+        前端/内部调用 -> Service.query_dict_data_list_services
+        -> Dao.query_dict_data_list -> 关联 SysDictType 和 SysDictData（仅取启用） -> 返回列表
 
         :param query_db: orm对象
         :param dict_type: 字典类型
