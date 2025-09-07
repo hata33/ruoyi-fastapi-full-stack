@@ -110,15 +110,18 @@ async def login(
         )
     # 登录成功后，更新用户的最近登录时间（loginDate），以及可能的状态字段
     await UserService.edit_user_services(
-        query_db, EditUserModel(userId=result[0].user_id, loginDate=datetime.now(), type='status')
+        query_db, EditUserModel(
+            userId=result[0].user_id, loginDate=datetime.now(), type='status')
     )
     # 记录登录成功的日志
     logger.info('登录成功')
     # 处理来自 Swagger/Redoc 文档页面的请求：
     # 某些情况下文档页的认证需要特殊返回结构，避免 token 显示 undefined
     # 判断请求是否来自于api文档，如果是返回指定格式的结果，用于修复api文档认证成功后token显示undefined的bug
-    request_from_swagger = request.headers.get('referer').endswith('docs') if request.headers.get('referer') else False
-    request_from_redoc = request.headers.get('referer').endswith('redoc') if request.headers.get('referer') else False
+    request_from_swagger = request.headers.get('referer').endswith(
+        'docs') if request.headers.get('referer') else False
+    request_from_redoc = request.headers.get('referer').endswith(
+        'redoc') if request.headers.get('referer') else False
     if request_from_swagger or request_from_redoc:
         # 文档页面需要标准 OAuth2 形式：access_token 与 token_type
         return {'access_token': access_token, 'token_type': 'Bearer'}
@@ -203,7 +206,8 @@ async def logout(request: Request, token: Optional[str] = Depends(oauth2_scheme)
     # 从请求头中的 Bearer Token 解析 JWT 载荷。
     # 注意：options={'verify_exp': False} 表示此处解码不校验过期时间，仅用于取出 session_id。
     payload = jwt.decode(
-        token, JwtConfig.jwt_secret_key, algorithms=[JwtConfig.jwt_algorithm], options={'verify_exp': False}
+        token, JwtConfig.jwt_secret_key, algorithms=[
+            JwtConfig.jwt_algorithm], options={'verify_exp': False}
     )
     # 从载荷中提取会话 ID（session_id），用于定位 Redis 中的令牌记录
     session_id: str = payload.get('session_id')

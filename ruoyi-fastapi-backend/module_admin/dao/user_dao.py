@@ -1,3 +1,25 @@
+"""
+学习向注释说明（不影响运行）：
+本文件是用户管理模块的数据访问层（DAO），基于异步 SQLAlchemy（AsyncSession）。
+
+通用用法提示（共通部分不再重复）：
+- 查询构建：使用 select(...) 链式拼接 where/join/order_by/distinct 等；最终通过 await db.execute(...) 执行
+- 结果提取：.scalars() 将行解包为模型实例；.first() 取首个；.all() 取全部
+- 连接方式：join(..., isouter=True) 表示左外连接；select_from(...) 指定主表，便于多表联查
+- 去重：distinct() 解决联查导致的重复行
+- 分页：PageUtil.paginate(...) 将 select 查询分页（需传 page_num/page_size）
+- 更新/删除：update(...) / delete(...) 返回 SQL 表达式，配合 db.execute(...) 执行；软删除通过 del_flag 字段
+- 时间区间：使用 datetime.combine + between 拼接起止时间（闭区间）
+- 数据权限：eval(data_scope_sql) 动态注入权限过滤表达式（高级/有风险：需保证 data_scope_sql 的安全来源）
+
+高级特性/注意点：
+- 异步会话 AsyncSession：所有数据库操作均需 await；避免在同步上下文调用
+- 批量更新：await db.execute(update(Model), [payload]) 传入列表可一次多行（本文件为单行字典形式）
+- 动态筛选：表达式中使用 condition if value else True 的写法优雅地忽略空条件
+- 角色=1 特权：当角色列表包含 1 时，菜单查询放宽为全量（与系统的超管语义保持一致）
+- MySQL 函数 find_in_set：用于部门祖先路径匹配（若数据库切换需提供等价实现）
+"""
+
 from datetime import datetime, time
 from sqlalchemy import and_, delete, desc, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -31,6 +53,7 @@ class UserDao:
         :param user_name: 用户名
         :return: 当前用户名的用户信息对象
         """
+        # 高级：distinct() 去重；order_by(desc(create_time)) 确保返回最新创建的匹配记录
         query_user_info = (
             (
                 await db.execute(
@@ -55,6 +78,7 @@ class UserDao:
         :param user: 用户参数
         :return: 当前用户参数的用户信息对象
         """
+        # 动态条件：当字段为空时以 True 兜底，优雅跳过该过滤条件
         query_user_info = (
             (
                 await db.execute(
@@ -84,6 +108,7 @@ class UserDao:
         :param user_id: 用户id
         :return: 当前user_id的用户信息对象
         """
+        # 基本信息：要求账号启用(status='0')且未删除(del_flag='0')
         query_user_basic_info = (
             (
                 await db.execute(
@@ -95,6 +120,7 @@ class UserDao:
             .scalars()
             .first()
         )
+        # 部门信息：select_from(SysUser) 指定主表，随后连表部门
         query_user_dept_info = (
             (
                 await db.execute(
@@ -111,6 +137,7 @@ class UserDao:
             .scalars()
             .first()
         )
+        # 角色信息：用户 -> 用户角色 -> 角色（角色需启用且未删除）
         query_user_role_info = (
             (
                 await db.execute(
@@ -128,6 +155,7 @@ class UserDao:
             .scalars()
             .all()
         )
+        # 岗位信息：用户 -> 用户岗位 -> 岗位（岗位需启用）
         query_user_post_info = (
             (
                 await db.execute(
@@ -144,10 +172,12 @@ class UserDao:
         )
         role_id_list = [item.role_id for item in query_user_role_info]
         if 1 in role_id_list:
+            # 特殊：当用户含有超管角色(role_id=1)时，菜单返回全量（仅按状态过滤）
             query_user_menu_info = (
                 (await db.execute(select(SysMenu).where(SysMenu.status == '0').distinct())).scalars().all()
             )
         else:
+            # 普通用户：沿 用户->用户角色->角色->角色菜单->菜单 关系联查
             query_user_menu_info = (
                 (
                     await db.execute(
@@ -191,11 +221,13 @@ class UserDao:
         :param user_id: 用户id
         :return: 当前user_id的用户信息对象
         """
+        # 对比 get_user_by_id：此处仅校验 del_flag（允许查看被禁用用户详情）
         query_user_basic_info = (
             (await db.execute(select(SysUser).where(SysUser.del_flag == '0', SysUser.user_id == user_id).distinct()))
             .scalars()
             .first()
         )
+        # 其余结构与 get_user_by_id 类似（不再赘述）
         query_user_dept_info = (
             (
                 await db.execute(
@@ -286,10 +318,12 @@ class UserDao:
         :param is_page: 是否开启分页
         :return: 用户列表信息对象
         """
+        # 返回 (SysUser, SysDept) 元组；分页在末尾通过 PageUtil 统一处理
         query = (
             select(SysUser, SysDept)
             .where(
                 SysUser.del_flag == '0',
+                # 部门过滤：匹配当前部门或其所有子部门（依赖 ancestors + find_in_set）
                 or_(
                     SysUser.dept_id == query_object.dept_id,
                     SysUser.dept_id.in_(
@@ -305,12 +339,14 @@ class UserDao:
                 SysUser.phonenumber.like(f'%{query_object.phonenumber}%') if query_object.phonenumber else True,
                 SysUser.status == query_object.status if query_object.status else True,
                 SysUser.sex == query_object.sex if query_object.sex else True,
+                # 时间闭区间：[begin 00:00:00, end 23:59:59]
                 SysUser.create_time.between(
                     datetime.combine(datetime.strptime(query_object.begin_time, '%Y-%m-%d'), time(00, 00, 00)),
                     datetime.combine(datetime.strptime(query_object.end_time, '%Y-%m-%d'), time(23, 59, 59)),
                 )
                 if query_object.begin_time and query_object.end_time
                 else True,
+                # 高级/注意：动态数据权限表达式注入，需确保安全
                 eval(data_scope_sql),
             )
             .join(
@@ -321,6 +357,7 @@ class UserDao:
             .order_by(SysUser.user_id)
             .distinct()
         )
+        # 分页或全量返回
         user_list = await PageUtil.paginate(db, query, query_object.page_num, query_object.page_size, is_page)
 
         return user_list
@@ -334,6 +371,7 @@ class UserDao:
         :param user: 用户对象
         :return: 新增校验结果
         """
+        # 排除 admin 字段，防止通过普通新增接口直接插入高权限标记
         db_user = SysUser(**user.model_dump(exclude={'admin'}))
         db.add(db_user)
         await db.flush()
@@ -349,6 +387,7 @@ class UserDao:
         :param user: 需要更新的用户字典
         :return: 编辑校验结果
         """
+        # 高级：以列表形式传参可实现“多行不同值”的批量更新；此处为单条
         await db.execute(update(SysUser), [user])
 
     @classmethod
@@ -360,6 +399,7 @@ class UserDao:
         :param user: 用户对象
         :return:
         """
+        # 软删除：设置 del_flag='2' 并记录审计字段
         await db.execute(
             update(SysUser)
             .where(SysUser.user_id == user.user_id)
@@ -375,6 +415,7 @@ class UserDao:
         :param query_object: 用户角色查询对象
         :return: 用户已分配的角色列表信息
         """
+        # 过滤：排除超管角色(role_id != 1)；支持按角色名/角色键可选筛选
         allocated_role_list = (
             (
                 await db.execute(
@@ -410,6 +451,7 @@ class UserDao:
         :param is_page: 是否开启分页
         :return: 角色已分配的用户列表信息
         """
+        # 通过中间表 SysUserRole 反查已分配给指定角色的用户
         query = (
             select(SysUser)
             .join(SysDept, SysDept.dept_id == SysUser.dept_id, isouter=True)
@@ -441,6 +483,7 @@ class UserDao:
         :param is_page: 是否开启分页
         :return: 角色未分配的用户列表信息
         """
+        # 策略：先允许连接出现空(role_id.is_(None))或不等于目标角色，再排除已绑定者
         query = (
             select(SysUser)
             .join(SysDept, SysDept.dept_id == SysUser.dept_id, isouter=True)
@@ -478,6 +521,7 @@ class UserDao:
         :param user_role: 用户角色关联对象
         :return:
         """
+        # 将 Pydantic 模型数据解包为 ORM 实例
         db_user_role = SysUserRole(**user_role.model_dump())
         db.add(db_user_role)
 
@@ -490,6 +534,7 @@ class UserDao:
         :param user_role: 用户角色关联对象
         :return:
         """
+        # 一次性清空该用户的角色，常用于“重置分配”场景
         await db.execute(delete(SysUserRole).where(SysUserRole.user_id.in_([user_role.user_id])))
 
     @classmethod
@@ -501,6 +546,7 @@ class UserDao:
         :param user_role: 用户角色关联对象
         :return:
         """
+        # 支持仅传 user_id 或仅传 role_id 或同时传两者
         await db.execute(
             delete(SysUserRole).where(
                 SysUserRole.user_id == user_role.user_id if user_role.user_id else True,
@@ -517,6 +563,7 @@ class UserDao:
         :param user_role: 用户角色关联对象
         :return: 用户角色关联信息
         """
+        # 以 (user_id, role_id) 作为唯一键进行精确匹配
         user_role_info = (
             (
                 await db.execute(
@@ -540,6 +587,7 @@ class UserDao:
         :param user_post: 用户岗位关联对象
         :return:
         """
+        # 将 Pydantic 模型数据解包为 ORM 实例
         db_user_post = SysUserPost(**user_post.model_dump())
         db.add(db_user_post)
 
@@ -552,10 +600,12 @@ class UserDao:
         :param user_post: 用户岗位关联对象
         :return:
         """
+        # 一次性清空该用户的岗位，常用于“重置分配”场景
         await db.execute(delete(SysUserPost).where(SysUserPost.user_id.in_([user_post.user_id])))
 
     @classmethod
     async def get_user_dept_info(cls, db: AsyncSession, dept_id: int):
+        # 获取启用且未删除的部门信息
         dept_basic_info = (
             (
                 await db.execute(
