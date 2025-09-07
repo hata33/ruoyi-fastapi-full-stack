@@ -48,6 +48,7 @@ from utils.response_util import ResponseUtil
 loginController = APIRouter()
 
 
+# 接口作用：处理用户登录，校验账号/验证码，生成并返回访问令牌（JWT）并缓存到Redis
 # 定义 POST /login 接口，并指定响应模型为 Token（包含 access_token 等字段）
 @loginController.post('/login', response_model=Token)
 # 使用自定义日志注解记录“用户登录”行为，业务类型为 OTHER，日志类型为 'login'
@@ -129,6 +130,7 @@ async def login(
     return ResponseUtil.success(msg='登录成功', dict_content={'token': access_token})
 
 
+# 接口作用：获取当前登录用户的完整信息（基本信息、角色、岗位、菜单权限汇总）
 # 定义 GET /getInfo 接口，返回当前登录用户的信息，响应模型为 CurrentUserModel
 @loginController.get('/getInfo', response_model=CurrentUserModel)
 # 通过 Depends(LoginService.get_current_user) 从请求中解析并校验 JWT，得到当前用户信息
@@ -142,6 +144,7 @@ async def get_login_user_info(
     return ResponseUtil.success(model_content=current_user)
 
 
+# 接口作用：获取当前登录用户可访问的路由（侧边栏菜单）树，用于前端动态路由
 # 定义 GET /getRouters 接口，返回当前登录用户可访问的路由菜单（前端侧边栏路由）
 @loginController.get('/getRouters')
 async def get_login_user_routers(
@@ -158,6 +161,7 @@ async def get_login_user_routers(
     return ResponseUtil.success(data=user_routers)
 
 
+# 接口作用：注册新用户（参数校验、密码加密、默认角色与部门处理等）
 # 定义 POST /register 接口，用户注册，响应模型为 CrudResponseModel（包含 message 等）
 @loginController.post('/register', response_model=CrudResponseModel)
 async def register_user(request: Request, user_register: UserRegister, query_db: AsyncSession = Depends(get_db)):
@@ -200,6 +204,7 @@ async def register_user(request: Request, user_register: UserRegister, query_db:
 #         return ResponseUtil.error(msg=str(e))
 
 
+# 接口作用：退出登录，使当前会话对应的 Redis 中 Token 失效
 # 定义 POST /logout 接口，处理退出登录。
 @loginController.post('/logout')
 async def logout(request: Request, token: Optional[str] = Depends(oauth2_scheme)):
