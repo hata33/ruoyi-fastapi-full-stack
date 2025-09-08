@@ -16,7 +16,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from module_admin.entity.do.dict_do import SysDictType, SysDictData
 from module_admin.entity.vo.dict_vo import DictDataModel, DictDataPageQueryModel, DictTypeModel, DictTypePageQueryModel
 from utils.page_util import PageUtil
-from utils.time_format_util import list_format_datetime
 
 
 class DictTypeDao:
@@ -79,7 +78,7 @@ class DictTypeDao:
         
         调用链路：
         init_cache_sys_dict_services -> DictTypeDao.get_all_dict_type -> SQLAlchemy 查询所有字典类型
-        -> list_format_datetime 格式化时间字段 -> 返回完整字典类型列表 
+        -> 返回完整字典类型列表（不做就地时间格式化，避免污染 ORM 实体） 
 
         功能：查询全部字典类型记录并格式化时间字段（用于缓存重建等场景）。
 
@@ -90,8 +89,8 @@ class DictTypeDao:
         dict_type_info = (await db.execute(select(SysDictType))).scalars().all()
         # .all()：获取全部记录组成的列表
 
-        # 使用工具函数格式化结果中的时间字段，便于前端展示
-        return list_format_datetime(dict_type_info)
+        # 直接返回 ORM 实体列表；如需时间字符串展示，请在序列化阶段处理，避免就地修改会话实体导致自动刷新异常
+        return dict_type_info
 
     @classmethod
     async def get_dict_type_list(cls, db: AsyncSession, query_object: DictTypePageQueryModel, is_page: bool = False):
