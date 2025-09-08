@@ -206,7 +206,7 @@ class DictTypeService:
 
         :param query_db: orm对象
         :param dict_id: 字典类型id
-        :return: 字典类型id对应的信息
+        :return: 字典类型id对应的信息 
         """
         dict_type = await DictTypeDao.get_dict_type_detail_by_id(query_db, dict_id=dict_id)
         if dict_type:
