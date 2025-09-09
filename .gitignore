@@ -104,8 +104,13 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
-# Environments
-.env
+# Environments 
+.env                # 排除根目录 .env 
+**/.env  
+/**/.env
+*/.env.*
+/.env.dev
+ruoyi-fastapi-backend/.env.dev
 .venv
 env/
 venv/
