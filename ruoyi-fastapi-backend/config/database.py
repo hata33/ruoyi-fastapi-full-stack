@@ -40,7 +40,7 @@ async_engine = create_async_engine(
 # autocommit=False: 不自动提交事务
 # autoflush=False: 不自动刷新
 # bind=async_engine: 绑定到上面创建的异步引擎
-AsyncSessionLocal = async_sessionmaker(autocommit=False, autoflush=False, bind=async_engine)
+AsyncSessionLocal = async_sessionmaker(autocommit=False, autoflush=False, bind=async_engine, expire_on_commit=False)
 
 
 # 定义ORM模型的基类

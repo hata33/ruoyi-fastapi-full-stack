@@ -82,6 +82,7 @@ from module_admin.controller.common_controller import commonController
 from module_admin.controller.config_controller import configController
 from module_admin.controller.dept_controller import deptController
 from module_admin.controller.dict_controller import dictController
+from module_admin.controller.file_controller import fileController
 from module_admin.controller.log_controller import logController
 from module_admin.controller.login_controller import loginController
 from module_admin.controller.job_controller import jobController
@@ -166,6 +167,7 @@ controller_list = [
     {'router': configController, 'tags': ['系统管理-参数管理']},  # 系统参数配置API
     {'router': noticeController, 'tags': ['系统管理-通知公告管理']},  # 系统公告管理API
     {'router': logController, 'tags': ['系统管理-日志管理']},  # 系统日志查询API
+    {'router': fileController, 'tags': ['系统管理-文件管理']},  # 文件管理API
     
     # 系统监控模块
     {'router': onlineController, 'tags': ['系统监控-在线用户']},  # 在线用户监控API
