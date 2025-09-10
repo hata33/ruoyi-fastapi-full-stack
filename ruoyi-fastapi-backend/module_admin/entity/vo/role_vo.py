@@ -1,9 +1,24 @@
+"""
+角色模块 VO（View Object / DTO）层
+
+说明（供初学者）：
+- 本文件定义与角色相关的 Pydantic 模型，用于：请求参数校验、响应数据结构、服务与控制层之间的数据传输。
+- 高级特性：
+  1) Pydantic v2：`BaseModel`、`Field`、`field_validator`、`model_validator` 用于字段描述与校验。
+  2) alias_generator：通过 `to_camel` 自动生成驼峰别名，让入参/出参字段与前端保持一致（驼峰）。
+  3) 自定义注解：`NotBlank`、`Size` 用于声明式字段校验；`@as_query` 将模型包装为 FastAPI 依赖（Query 解析）。
+
+调用链路（这些模型在何处被使用）：
+- Controller：角色相关接口的请求体验证与响应数据结构（例如 `AddRoleModel`、`RolePageQueryModel`）。
+- Service：在业务逻辑中用强类型传递数据（避免散乱字典），并与 DAO/DO 对接时通过 `model_dump()` 转换。
+"""
+
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
-from pydantic.alias_generators import to_camel
-from pydantic_validation_decorator import NotBlank, Size
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator  # Pydantic v2 基础能力
+from pydantic.alias_generators import to_camel  # 自动生成驼峰别名
+from pydantic_validation_decorator import NotBlank, Size  # 自定义参数校验装饰器
 from typing import List, Literal, Optional, Union
-from module_admin.annotation.pydantic_annotation import as_query
+from module_admin.annotation.pydantic_annotation import as_query  # 将模型包装为 Query 依赖（高级特性）
 
 
 class RoleModel(BaseModel):
@@ -11,6 +26,7 @@ class RoleModel(BaseModel):
     角色表对应pydantic模型
     """
 
+    # alias_generator: 自动将下划线命名转换为驼峰，from_attributes: 允许从 ORM 对象构建
     model_config = ConfigDict(alias_generator=to_camel, from_attributes=True)
 
     role_id: Optional[int] = Field(default=None, description='角色ID')
@@ -32,6 +48,7 @@ class RoleModel(BaseModel):
     remark: Optional[str] = Field(default=None, description='备注')
     admin: Optional[bool] = Field(default=False, description='是否为admin')
 
+    # 将 0/1 与 True/False 在入参与内部表示之间做双向映射（兼容前端与数据库）
     @field_validator('menu_check_strictly', 'dept_check_strictly')
     @classmethod
     def check_filed_mapping(cls, v: Union[int, bool]) -> Union[int, bool]:
@@ -45,6 +62,7 @@ class RoleModel(BaseModel):
             v = 0
         return v
 
+    # 根据 role_id 是否为 1 自动计算 admin 字段（便于下游做“禁止操作超级管理员”等校验）
     @model_validator(mode='after')
     def check_admin(self) -> 'RoleModel':
         if self.role_id == 1:
@@ -53,21 +71,25 @@ class RoleModel(BaseModel):
             self.admin = False
         return self
 
+    # 角色名称不能为空，且长度限制（声明式校验）
     @NotBlank(field_name='role_name', message='角色名称不能为空')
     @Size(field_name='role_name', min_length=0, max_length=30, message='角色名称长度不能超过30个字符')
     def get_role_name(self):
         return self.role_name
 
+    # 权限字符不能为空，且长度限制
     @NotBlank(field_name='role_key', message='权限字符不能为空')
     @Size(field_name='role_key', min_length=0, max_length=100, message='权限字符长度不能超过100个字符')
     def get_role_key(self):
         return self.role_key
 
+    # 显示顺序不能为空
     @NotBlank(field_name='role_sort', message='显示顺序不能为空')
     def get_role_sort(self):
         return self.role_sort
 
     def validate_fields(self):
+        # 触发三项字段校验
         self.get_role_name()
         self.get_role_key()
         self.get_role_sort()
@@ -121,8 +143,8 @@ class RoleMenuQueryModel(BaseModel):
 
     model_config = ConfigDict(alias_generator=to_camel)
 
-    menus: List = Field(default=[], description='菜单信息')
-    checked_keys: List[int] = Field(default=[], description='已选择的菜单ID信息')
+    menus: List = Field(default=[], description='菜单信息')  # 菜单树或列表数据
+    checked_keys: List[int] = Field(default=[], description='已选择的菜单ID信息')  # 已勾选的菜单ID
 
 
 class RoleDeptQueryModel(BaseModel):
@@ -132,8 +154,8 @@ class RoleDeptQueryModel(BaseModel):
 
     model_config = ConfigDict(alias_generator=to_camel)
 
-    depts: List = Field(default=[], description='部门信息')
-    checked_keys: List[int] = Field(default=[], description='已选择的部门ID信息')
+    depts: List = Field(default=[], description='部门信息')  # 部门树或列表数据
+    checked_keys: List[int] = Field(default=[], description='已选择的部门ID信息')  # 已勾选的部门ID
 
 
 class AddRoleModel(RoleModel):
@@ -141,9 +163,9 @@ class AddRoleModel(RoleModel):
     新增角色模型
     """
 
-    dept_ids: List = Field(default=[], description='部门ID信息')
-    menu_ids: List = Field(default=[], description='菜单ID信息')
-    type: Optional[str] = Field(default=None, description='操作类型')
+    dept_ids: List = Field(default=[], description='部门ID信息')  # 数据权限-自定义时使用
+    menu_ids: List = Field(default=[], description='菜单ID信息')  # 菜单关联时使用
+    type: Optional[str] = Field(default=None, description='操作类型')  # 用于在服务层区分“状态变更”等分支
 
 
 class DeleteRoleModel(BaseModel):
@@ -153,6 +175,6 @@ class DeleteRoleModel(BaseModel):
 
     model_config = ConfigDict(alias_generator=to_camel)
 
-    role_ids: str = Field(description='需要删除的菜单ID')
+    role_ids: str = Field(description='需要删除的菜单ID')  # 逗号分隔的角色ID集合
     update_by: Optional[str] = Field(default=None, description='更新者')
     update_time: Optional[datetime] = Field(default=None, description='更新时间')

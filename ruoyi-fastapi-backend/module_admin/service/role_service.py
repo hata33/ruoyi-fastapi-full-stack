@@ -1,3 +1,28 @@
+"""
+角色管理-服务层（Service）
+
+说明（供初学者）：
+- 本文件承载角色的业务逻辑：参数校验、唯一性校验、数据权限校验、事务控制与聚合 DAO 调用。
+- 高级特性：
+  1) Async + await：全异步服务方法，提升并发处理能力。
+  2) 事务控制：通过 commit/rollback 显式提交/回滚，确保在异常时数据一致性。
+  3) Pydantic 模型：`RoleModel`/`AddRoleModel` 等用于数据传输与验证，`model_dump()` 转字典安全更新。
+  4) 结果规范化：`CamelCaseUtil` 将数据库对象转换为驼峰键名，契合前端约定。
+
+调用链路（从 Service 到 DAO/工具）：
+- 角色下拉：get_role_select_option_services → RoleDao.get_role_select_option_dao → CamelCaseUtil
+- 角色部门树：get_role_dept_tree_services → RoleService.role_detail_services / RoleDao.get_role_dept_dao
+- 角色列表：get_role_list_services → RoleDao.get_role_list
+- 名称/权限唯一校验：check_role_name_unique_services / check_role_key_unique_services → RoleDao.get_role_by_info
+- 新增角色：add_role_services → RoleDao.add_role_dao / add_role_menu_dao → commit/rollback
+- 编辑角色：edit_role_services → RoleDao.edit_role_dao / delete_role_menu_dao / add_role_menu_dao → commit/rollback
+- 分配数据权限：role_datascope_services → RoleDao.edit_role_dao / delete_role_dept_dao / add_role_dept_dao → commit/rollback
+- 删除角色：delete_role_services → RoleDao.count_user_role_dao / delete_* / delete_role_dao → commit/rollback
+- 角色详情：role_detail_services → RoleDao.get_role_detail_by_id → CamelCaseUtil
+- 导出角色：export_role_list_services → ExcelUtil.export_list2excel
+- 已/未分配用户：get_role_user_allocated_list_services / get_role_user_unallocated_list_services → UserDao.* → PageResponseModel
+"""
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from config.constant import CommonConstant
@@ -143,18 +168,22 @@ class RoleService:
         :param page_object: 新增角色对象
         :return: 新增角色校验结果
         """
+        # 1) 将前端传入的 AddRoleModel 转换为 RoleModel（字段名按 alias 适配 DO 层）
         add_role = RoleModel(**page_object.model_dump(by_alias=True))
+        # 2) 业务校验：角色名 & 权限字符的唯一性；若不唯一直接抛错
         if not await cls.check_role_name_unique_services(query_db, page_object):
             raise ServiceException(message=f'新增角色{page_object.role_name}失败，角色名称已存在')
         elif not await cls.check_role_key_unique_services(query_db, page_object):
             raise ServiceException(message=f'新增角色{page_object.role_name}失败，角色权限已存在')
         else:
             try:
+                # 3) 先插入角色主体，再写入角色-菜单关联（若有）
                 add_result = await RoleDao.add_role_dao(query_db, add_role)
                 role_id = add_result.role_id
                 if page_object.menu_ids:
                     for menu in page_object.menu_ids:
                         await RoleDao.add_role_menu_dao(query_db, RoleMenuModel(roleId=role_id, menuId=menu))
+                # 4) 提交事务；任一异常都会进入 except 并回滚
                 await query_db.commit()
                 return CrudResponseModel(is_success=True, message='新增成功')
             except Exception as e:
@@ -170,20 +199,26 @@ class RoleService:
         :param page_object: 编辑角色对象
         :return: 编辑角色校验结果
         """
+        # 1) 只更新传入的字段（exclude_unset），并避免覆盖 admin 字段
         edit_role = page_object.model_dump(exclude_unset=True, exclude={'admin'})
+        # 2) 如果不是仅改状态，则不直接在主角色表里处理 menu_ids（菜单关联另行处理）
         if page_object.type != 'status':
             del edit_role['menu_ids']
+        # 3) 如果仅改状态，移除 type 字段避免误更新
         if page_object.type == 'status':
             del edit_role['type']
         role_info = await cls.role_detail_services(query_db, edit_role.get('role_id'))
         if role_info:
+            # 4) 编辑基础信息时再次做唯一性校验；仅修改状态则跳过
             if page_object.type != 'status':
                 if not await cls.check_role_name_unique_services(query_db, page_object):
                     raise ServiceException(message=f'修改角色{page_object.role_name}失败，角色名称已存在')
                 elif not await cls.check_role_key_unique_services(query_db, page_object):
                     raise ServiceException(message=f'修改角色{page_object.role_name}失败，角色权限已存在')
             try:
+                # 5) 更新角色主表
                 await RoleDao.edit_role_dao(query_db, edit_role)
+                # 6) 若涉及菜单变更：先删后插，保持关联一致（幂等）
                 if page_object.type != 'status':
                     await RoleDao.delete_role_menu_dao(query_db, RoleMenuModel(roleId=page_object.role_id))
                     if page_object.menu_ids:
@@ -208,12 +243,15 @@ class RoleService:
         :param page_object: 角色数据权限对象
         :return: 分配角色数据权限结果
         """
+        # 1) 仅保留与数据权限相关的字段，避免误更新其它字段
         edit_role = page_object.model_dump(exclude_unset=True, exclude={'admin', 'dept_ids'})
         role_info = await cls.role_detail_services(query_db, page_object.role_id)
         if role_info.role_id:
             try:
+                # 2) 更新角色数据权限字段，并重建角色-部门关联
                 await RoleDao.edit_role_dao(query_db, edit_role)
                 await RoleDao.delete_role_dept_dao(query_db, RoleDeptModel(roleId=page_object.role_id))
+                # 仅当 data_scope == '2'（自定义部门）时，落库 deptIds
                 if page_object.dept_ids and page_object.data_scope == '2':
                     for dept in page_object.dept_ids:
                         await RoleDao.add_role_dept_dao(
@@ -236,16 +274,19 @@ class RoleService:
         :param page_object: 删除角色对象
         :return: 删除角色校验结果
         """
+        # 支持批量删除：先校验使用情况，再删除关联与主表（逻辑删除）
         if page_object.role_ids:
             role_id_list = page_object.role_ids.split(',')
             try:
                 for role_id in role_id_list:
                     role = await cls.role_detail_services(query_db, int(role_id))
+                    # 若角色已分配给用户，则不允许删除
                     if (await RoleDao.count_user_role_dao(query_db, int(role_id))) > 0:
                         raise ServiceException(message=f'角色{role.role_name}已分配,不能删除')
                     role_id_dict = dict(
                         roleId=role_id, updateBy=page_object.update_by, updateTime=page_object.update_time
                     )
+                    # 先删角色-菜单与角色-部门关联，再逻辑删除角色
                     await RoleDao.delete_role_menu_dao(query_db, RoleMenuModel(**role_id_dict))
                     await RoleDao.delete_role_dept_dao(query_db, RoleDeptModel(**role_id_dict))
                     await RoleDao.delete_role_dao(query_db, RoleModel(**role_id_dict))
@@ -266,6 +307,7 @@ class RoleService:
         :param role_id: 角色id
         :return: 角色id对应的信息
         """
+        # 查询并将 DO 转换为 VO（键名转为驼峰）
         role = await RoleDao.get_role_detail_by_id(query_db, role_id=role_id)
         if role:
             result = RoleModel(**CamelCaseUtil.transform_result(role))
@@ -296,6 +338,7 @@ class RoleService:
             'remark': '备注',
         }
 
+        # 将状态码转为中文，方便导出阅读
         for item in role_list:
             if item.get('status') == '0':
                 item['status'] = '正常'
@@ -318,6 +361,7 @@ class RoleService:
         :param is_page: 是否开启分页
         :return: 已分配用户列表
         """
+        # 调用 DAO 获取分页数据（字典），再将 rows 转为强类型 VO
         query_user_list = await UserDao.get_user_role_allocated_list_by_role_id(
             query_db, page_object, data_scope_sql, is_page
         )
@@ -343,6 +387,7 @@ class RoleService:
         :param is_page: 是否开启分页
         :return: 未分配用户列表
         """
+        # 调用 DAO 获取分页数据（字典），再将 rows 转为强类型 VO
         query_user_list = await UserDao.get_user_role_unallocated_list_by_role_id(
             query_db, page_object, data_scope_sql, is_page
         )
