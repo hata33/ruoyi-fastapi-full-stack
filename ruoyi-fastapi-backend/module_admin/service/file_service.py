@@ -42,7 +42,7 @@ class FileService:
     MAX_FILE_SIZE = 100 * 1024 * 1024
 
     # 文件存储根目录
-    UPLOAD_ROOT_DIR = "vf_admin/upload_path"
+    UPLOAD_ROOT_DIR = "vf_admin/upload_path/cps_files"
 
     @classmethod
     async def get_file_list_services(
@@ -272,7 +272,7 @@ class FileService:
             # 注意：FileCreateModel使用驼峰命名，需要使用正确的字段名
             file_create_data = FileCreateModel(
                 originalFilename=file.filename,  # 驼峰命名：originalFilename
-                storageFilename=storage_filename,  # 驼峰命名：storageFilename
+                storageFilename=project_name+'_'+storage_filename,  # 驼峰命名：storageFilename
                 fileExtension=file_extension,  # 驼峰命名：fileExtension
                 fileSize=file_size,  # 驼峰命名：fileSize
                 filePath=file_path,  # 驼峰命名：filePath
@@ -438,7 +438,7 @@ class FileService:
                 except ValueError:
                     # 忽略无效的非整数ID，或根据需要抛出异常
                     logger.warning(f"无效的文件ID格式: {fid_str}，已跳过")
-            print("###########################",file_id_list)
+            print("###########################", file_id_list)
             if not file_id_list:
                 raise ServiceException(message='没有有效的文件ID')
 
