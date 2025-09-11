@@ -1,23 +1,52 @@
+"""
+日志注解（Log）
+
+说明（供初学者）：
+- 这是一个基于装饰器的 AOP 日志切面，用于统一记录接口的请求/响应、耗时、操作者等信息。
+- 装饰器分“登录日志”和“操作日志”两类，通过 log_type 区分；依赖 FastAPI 的 Request、项目的登录态解析与数据库服务。
+
+执行步骤（wrapper 内部，重要逻辑流程）：
+1) 记录开始时间（用于耗时统计）。
+2) 反射获取被装饰函数文件与路径（便于定位方法）。
+3) 通过反射定位并获取 Request 与 AsyncSession 类型的入参实例。
+4) 解析请求关键信息：方法、URL、IP、User-Agent、Content-Type。
+5) 根据 Content-Type 提取参数（表单/二进制 JSON），并合并路径参数；限制最大长度。
+6) 记录操作时间与（登录日志时）解析客户端设备信息，向调用链注入 login_info。
+7) try/except 调用被装饰函数：
+   - 捕获业务异常并标准化响应；
+   - 兜底捕获未知异常并返回标准错误响应；
+8) 计算耗时，解析响应结构（JSONResponse 或普通 Response）；
+9) 依据响应 code 推断状态与错误信息；
+10) 根据日志类型写入对应日志表（登录日志或操作日志）。
+11) 返回原始处理结果。
+
+难点标注：
+- 反射参数提取：get_function_parameters_name_by_type / get_function_parameters_value_by_name 依靠注解类型匹配参数。
+- 请求体解析：需兼容 form、raw body、路径参数，且注意长度限制与编码。
+- 响应解析：JSONResponse/ORJSONResponse/UJSONResponse 与普通 Response 的取值方式不同。
+- 设备识别与地理位置：第三方库与外部 HTTP 请求需要做好异常兜底与缓存（@lru_cache）。
+"""
+
 import inspect
 import json
 import os
 import requests
 import time
 from datetime import datetime
-from fastapi import Request
-from fastapi.responses import JSONResponse, ORJSONResponse, UJSONResponse
-from functools import lru_cache, wraps
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import Request  # FastAPI 请求对象
+from fastapi.responses import JSONResponse, ORJSONResponse, UJSONResponse  # 常见 JSON 响应类型
+from functools import lru_cache, wraps  # 缓存与保留函数元信息
+from sqlalchemy.ext.asyncio import AsyncSession  # 异步数据库会话类型
 from typing import Any, Callable, Literal, Optional
-from user_agents import parse
-from config.enums import BusinessType
-from config.env import AppConfig
-from exceptions.exception import LoginException, ServiceException, ServiceWarning
-from module_admin.entity.vo.log_vo import LogininforModel, OperLogModel
-from module_admin.service.log_service import LoginLogService, OperationLogService
-from module_admin.service.login_service import LoginService
-from utils.log_util import logger
-from utils.response_util import ResponseUtil
+from user_agents import parse  # UA 解析库，用于识别设备/浏览器
+from config.enums import BusinessType  # 业务类型枚举
+from config.env import AppConfig  # 应用配置（是否开启 IP 归属查询）
+from exceptions.exception import LoginException, ServiceException, ServiceWarning  # 统一异常类型
+from module_admin.entity.vo.log_vo import LogininforModel, OperLogModel  # 日志 VO 模型
+from module_admin.service.log_service import LoginLogService, OperationLogService  # 日志服务
+from module_admin.service.login_service import LoginService  # 登录服务（解析当前用户）
+from utils.log_util import logger  # 日志工具
+from utils.response_util import ResponseUtil  # 统一响应工具
 
 
 class Log:
@@ -39,14 +68,18 @@ class Log:
         :param log_type: 日志类型（login表示登录日志，operation表示为操作日志）
         :return:
         """
+        # 记录元信息用于入库
         self.title = title
         self.business_type = business_type.value
         self.log_type = log_type
 
     def __call__(self, func):
+        # wraps 保留被装饰函数的元信息（名称、注解等）
         @wraps(func)
         async def wrapper(*args, **kwargs):
+            # Step 1: 开始计时（ms）
             start_time = time.time()
+            # Step 2: 反射获取函数定位信息（文件 → 相对路径 → 方法签名）
             # 获取被装饰函数的文件路径
             file_path = inspect.getfile(func)
             # 获取项目根路径
@@ -55,12 +88,13 @@ class Log:
             relative_path = os.path.relpath(file_path, start=project_root)[0:-2].replace('\\', '.').replace('/', '.')
             # 获取当前被装饰函数所在路径
             func_path = f'{relative_path}{func.__name__}()'
-            # 获取上下文信息
+            # Step 3: 通过注解类型反射定位入参，获取上下文信息
             request_name_list = get_function_parameters_name_by_type(func, Request)
             request = get_function_parameters_value_by_name(func, request_name_list[0], *args, **kwargs)
             token = request.headers.get('Authorization')
             session_name_list = get_function_parameters_name_by_type(func, AsyncSession)
             query_db = get_function_parameters_value_by_name(func, session_name_list[0], *args, **kwargs)
+            # 基本请求信息
             request_method = request.method
             operator_type = 0
             user_agent = request.headers.get('User-Agent')
@@ -75,7 +109,7 @@ class Log:
             oper_location = '内网IP'
             if AppConfig.app_ip_location_query:
                 oper_location = get_ip_location(oper_ip)
-            # 根据不同的请求类型使用不同的方法获取请求参数
+            # Step 4: 根据不同的 Content-Type 获取请求参数（难点：兼容 form 与 raw body，并合并路径参数）
             content_type = request.headers.get('Content-Type')
             if content_type and (
                 'multipart/form-data' in content_type or 'application/x-www-form-urlencoded' in content_type
@@ -96,7 +130,7 @@ class Log:
             if len(oper_param) > 2000:
                 oper_param = '请求参数过长'
 
-            # 获取操作时间
+            # Step 5: 记录操作时间；登录日志时提前构造 login_info 注入调用链
             oper_time = datetime.now()
             # 此处在登录之前向原始函数传递一些登录信息，用于监测在线用户的相关信息
             login_log = {}
@@ -115,29 +149,33 @@ class Log:
                     os=system_os,
                     loginTime=oper_time.strftime('%Y-%m-%d %H:%M:%S'),
                 )
+                # 难点：在不改变被装饰函数签名的前提下，利用 kwargs 透传登录信息给后续逻辑
                 kwargs['form_data'].login_info = login_log
             try:
-                # 调用原始函数
+                # Step 6: 调用原始函数
                 result = await func(*args, **kwargs)
             except (LoginException, ServiceWarning) as e:
+                # 业务可预期异常：记录并包装为统一失败/警告响应
                 logger.warning(e.message)
                 result = ResponseUtil.failure(data=e.data, msg=e.message)
             except ServiceException as e:
+                # 业务异常：记录错误日志并包装响应
                 logger.error(e.message)
                 result = ResponseUtil.error(data=e.data, msg=e.message)
             except Exception as e:
+                # 未知异常兜底：记录堆栈并返回标准错误响应
                 logger.exception(e)
                 result = ResponseUtil.error(msg=str(e))
-            # 获取请求耗时
+            # Step 7: 统计耗时（ms）
             cost_time = float(time.time() - start_time) * 100
-            # 判断请求是否来自api文档
+            # Step 8: 判断是否来自 API 文档（Swagger/Redoc），某些情况下不落日志
             request_from_swagger = (
                 request.headers.get('referer').endswith('docs') if request.headers.get('referer') else False
             )
             request_from_redoc = (
                 request.headers.get('referer').endswith('redoc') if request.headers.get('referer') else False
             )
-            # 根据响应结果的类型使用不同的方法获取响应结果参数
+            # Step 9: 提取响应体（难点：不同响应类型取值不同）
             if (
                 isinstance(result, JSONResponse)
                 or isinstance(result, ORJSONResponse)
@@ -153,14 +191,14 @@ class Log:
                     else:
                         result_dict = {'code': result.status_code, 'message': '获取失败'}
             json_result = json.dumps(result_dict, ensure_ascii=False)
-            # 根据响应结果获取响应状态及异常信息
+            # Step 10: 推断状态与错误信息（与前后端约定绑定）
             status = 1
             error_msg = ''
             if result_dict.get('code') == 200:
                 status = 0
             else:
                 error_msg = result_dict.get('msg')
-            # 根据日志类型向对应的日志表插入数据
+            # Step 11: 分支入库（登录日志 or 操作日志）
             if self.log_type == 'login':
                 # 登录请求来自于api文档时不记录登录日志，其余情况则记录
                 if request_from_swagger or request_from_redoc:
@@ -175,6 +213,7 @@ class Log:
 
                     await LoginLogService.add_login_log_services(query_db, LogininforModel(**login_log))
             else:
+                # 获取当前登录用户并构造操作日志模型
                 current_user = await LoginService.get_current_user(request, token, query_db)
                 oper_name = current_user.user.user_name
                 dept_name = current_user.user.dept.dept_name if current_user.user.dept else None
@@ -211,6 +250,8 @@ def get_ip_location(oper_ip: str):
     :param oper_ip: 需要查询的ip
     :return: ip归属区域
     """
+    # 说明：外部 HTTP 请求（百度飞桨气象 API），通过 lru_cache 缓存结果，避免频繁查询；
+    #       发生异常或内网场景时返回“未知/内网IP”。
     oper_location = '内网IP'
     try:
         if oper_ip != '127.0.0.1' and oper_ip != 'localhost':
@@ -235,6 +276,7 @@ def get_function_parameters_name_by_type(func: Callable, param_type: Any):
     :param arg_type: 参数类型
     :return: 函数指定类型的参数名称
     """
+    # 难点：通过注解类型定位参数，对于装饰器层层包裹的函数，需确保 wraps 保留了原注解
     # 获取函数的参数信息
     parameters = inspect.signature(func).parameters
     # 找到指定类型的参数名称
@@ -253,7 +295,7 @@ def get_function_parameters_value_by_name(func: Callable, name: str, *args, **kw
     :param name: 参数名
     :return: 参数值
     """
-    # 获取参数值
+    # 将 *args/**kwargs 绑定至形参，获取指定名称的入参值
     bound_parameters = inspect.signature(func).bind(*args, **kwargs)
     bound_parameters.apply_defaults()
     parameters_value = bound_parameters.arguments.get(name)
