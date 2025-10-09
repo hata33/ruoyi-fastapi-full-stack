@@ -21,7 +21,6 @@ from module_admin.annotation.pydantic_annotation import as_query
 
 @as_query
 class DictTypePageQueryModel(BaseModel):
-    model_config = ConfigDict(alias_generator=to_camel, from_attributes=True)
     dict_name: str | None = Field(default=None, description='字典名称')
     dict_type: str | None = Field(default=None, description='字典类型')
     status: str | None = Field(default=None, description='状态（0正常 1停用）')
