@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(docker-compose:*)",
+      "Bash(docker:*)",
+      "Bash(curl:*)",
+      "Bash(rmdir:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

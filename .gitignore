@@ -105,11 +105,12 @@ celerybeat.pid
 *.sage.py
 
 # Environments 
-.env                # 排除根目录 .env 
-**/.env  
-/**/.env
-*/.env.*
-/.env.dev
+# .env                # 排除根目录 .env 
+# **/.env  
+# /**/.env
+# */.env.*
+# /.env.dev
+postgres_data/
 ruoyi-fastapi-backend/.env.dev
 .venv
 env/

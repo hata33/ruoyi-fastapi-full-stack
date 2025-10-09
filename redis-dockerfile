@@ -1,0 +1,17 @@
+FROM redis:7-alpine
+
+# 设置时区
+ENV TZ=Asia/Shanghai
+
+# 设置工作目录
+WORKDIR /data
+
+# 创建数据目录
+RUN mkdir -p /data && chown redis:redis /data
+
+# 暴露端口
+EXPOSE 6379
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+  CMD redis-cli ping

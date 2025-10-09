@@ -7,9 +7,26 @@ from server import app, AppConfig  # noqa: F401
 
 # Python的标准入口点检查，确保代码只在直接运行此文件时执行，而不是在导入时执行
 if __name__ == '__main__':
+    import argparse
+
+    # 解析命令行参数
+    parser = argparse.ArgumentParser(description='FastAPI应用启动参数')
+    parser.add_argument('--env', type=str, default='dev', help='运行环境 (dev/prod/docker)')
+    args = parser.parse_args()
+
+    # 设置环境变量
+    import os
+    os.environ['APP_ENV'] = args.env
+
+    # 重新导入配置以使用新的环境变量
+    import importlib
+    import config.env
+    importlib.reload(config.env)
+    from config.env import AppConfig
+
     # 使用uvicorn启动FastAPI应用
     uvicorn.run(
-        app='app:app',  # 应用路径，格式为"文件名:应用实例名"
+        app='server:app',  # 应用路径，格式为"模块名:应用实例名"
         host=AppConfig.app_host,  # 服务器主机地址，从AppConfig配置中获取
         port=AppConfig.app_port,  # 服务器端口，从AppConfig配置中获取
         root_path=AppConfig.app_root_path,  # API的根路径前缀，从AppConfig配置中获取
