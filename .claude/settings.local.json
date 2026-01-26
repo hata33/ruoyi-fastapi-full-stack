@@ -6,7 +6,8 @@
       "Bash(docker-compose:*)",
       "Bash(docker:*)",
       "Bash(curl:*)",
-      "Bash(rmdir:*)"
+      "Bash(rmdir:*)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []

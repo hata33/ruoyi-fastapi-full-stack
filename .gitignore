@@ -114,6 +114,7 @@ postgres_data/
 ruoyi-fastapi-backend/.env.dev
 .venv
 env/
+.env
 venv/
 ENV/
 env.bak/
