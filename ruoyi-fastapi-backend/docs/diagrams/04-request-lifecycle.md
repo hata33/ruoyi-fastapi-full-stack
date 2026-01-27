@@ -98,11 +98,7 @@ sequenceDiagram
     Log-->>Response: 完成日志
 
     Response->>Response: 统一响应格式
-    Response->>Response: {
-        code: 200,
-        msg: "操作成功",
-        data: {...}
-    }
+    Response->>Response: code:200, msg:操作成功
 
     Response-->>Middleware: 返回响应
     Middleware-->>Uvicorn: HTTP 200
@@ -451,19 +447,9 @@ graph TB
 
     BuildResponse --> Success
 
-    Success --> FinalResponse["{
-        code: 200,
-        msg: '操作成功',
-        data: {...},
-        traceId: 'abc-123'
-    }"]
+    Success --> FinalResponse["code:200, msg:成功"]
 
-    Error --> ErrorResponse["{
-        code: 500,
-        msg: '操作失败',
-        data: null,
-        traceId: 'abc-123'
-    }"]
+    Error --> ErrorResponse["code:500, msg:失败"]
 
     style Success fill:#4CAF50
     style Error fill:#f44336

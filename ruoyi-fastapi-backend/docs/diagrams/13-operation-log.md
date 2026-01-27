@@ -45,7 +45,7 @@ sequenceDiagram
 ## 2. AOP 日志切面拦截机制
 
 ```mermaid
-flowchart TD
+graph TD
     Start([请求到达]) --> CheckDecorator{有@Log装饰器?}
 
     CheckDecorator -->|否| Execute[直接执行方法]

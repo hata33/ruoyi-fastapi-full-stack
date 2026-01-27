@@ -218,13 +218,11 @@ stateDiagram-v2
     记录日志 --> 构建401: ResponseUtil.unauthorized
     记录日志 --> 构建403: ResponseUtil.forbidden
 
-    构建响应 --> 返回JSON: code: 500
-    构建401 --> 返回JSON: code: 401
-    构建403 --> 返回JSON: code: 403
+    构建响应 --> 返回JSON
+    构建401 --> 返回JSON
+    构建403 --> 返回JSON
 
     返回JSON --> [*]: 客户端接收
-    返回JSON --> [*]
-    返回JSON --> [*]
 
     note right of 业务异常
         业务逻辑错误

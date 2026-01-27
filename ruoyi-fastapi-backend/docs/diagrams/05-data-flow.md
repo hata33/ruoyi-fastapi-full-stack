@@ -424,11 +424,7 @@ graph TB
     Total --> BuildResponse[构建分页响应]
     Rows --> BuildResponse
 
-    BuildResponse --> Response["{
-        code: 200,
-        rows: [...],
-        total: 100
-    }"]
+    BuildResponse --> Response["code:200, rows:[...], total:100"]
 
     Response --> Frontend[前端分页组件]
     Frontend --> Display[显示数据]

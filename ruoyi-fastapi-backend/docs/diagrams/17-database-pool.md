@@ -233,7 +233,7 @@ mindmap
 ## 7. 异步会话管理
 
 ```mermaid
-flowchart TD
+graph TD
     subgraph "应用初始化"
         A1[导入create_async_engine]
         A2[配置数据库URL]
@@ -243,21 +243,21 @@ flowchart TD
 
     subgraph "会话创建"
         B1[AsyncSessionLocal]
-        B2["autocommit=False"]
-        B3["autoflush=False"]
-        B4["expire_on_commit=False"]
+        B2[autocommit等于False]
+        B3[autoflush等于False]
+        B4[expire_on_commit等于False]
     end
 
     subgraph "依赖注入"
-        C1[get_db()函数]
+        C1[get_db函数]
         C2[yield返回会话]
         C3[上下文自动关闭]
     end
 
     subgraph "使用示例"
-        D1["async with AsyncSessionLocal()"]
-        D2["执行业务逻辑"]
-        D3["自动关闭会话"]
+        D1[async with AsyncSessionLocal]
+        D2[执行业务逻辑]
+        D3[自动关闭会话]
     end
 
     A1 --> A2

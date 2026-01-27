@@ -122,11 +122,7 @@ sequenceDiagram
     LoginService-->>LoginController: LoginUser + Token
     LoginController-->>Gateway: 统一响应格式
     Gateway-->>Nginx: JSON 响应
-    Nginx-->>Frontend: {
-        code: 200,
-        msg: "操作成功",
-        token: "eyJ0eXAiOiJKV1QiLCJhbGc..."
-    }
+    Nginx-->>Frontend: code:200, token:eyJ0eXAi...
 
     Frontend->>Frontend: 存储 Token 到 localStorage
     Frontend->>Frontend: 存储用户信息到 Pinia
@@ -159,23 +155,14 @@ sequenceDiagram
 
     Backend->>Redis: set(captcha:abc-123-def, "8", 2分钟)
 
-    Backend-->>Frontend: {
-        uuid: "abc-123-def",
-        img: "base64图片",
-        captchaEnabled: true
-    }
+    Backend-->>Frontend: uuid:abc-123-def, img:base64图片
 
     Frontend->>Frontend: 显示验证码图片
 
     Note over Frontend,Backend: 验证码校验
     Frontend->>Frontend: 用户输入 "8"
 
-    Frontend->>Backend: POST /api/login {
-        username: "admin",
-        password: "admin123",
-        code: "8",
-        uuid: "abc-123-def"
-    }
+    Frontend->>Backend: POST /api/login, username:admin, password:***
 
     Backend->>Redis: get(captcha:abc-123-def)
     Redis-->>Backend: "8"
@@ -318,9 +305,7 @@ sequenceDiagram
     Backend-->>Frontend: 401 Unauthorized
 
     Frontend->>Frontend: 检测到 401 错误
-    Frontend->>API: POST /auth/refresh {
-        refresh_token: <refresh_token>
-    }
+    Frontend->>API: POST /auth/refresh, refresh_token:***
 
     API->>Backend: 验证 refresh_token
     Backend->>JWT: decode(refresh_token)
@@ -329,9 +314,7 @@ sequenceDiagram
         JWT-->>Backend: user_id
         Backend->>JWT: 生成新的 access_token
         JWT-->>Backend: new_access_token
-        Backend-->>Frontend: {
-            access_token: new_token
-        }
+        Backend-->>Frontend: access_token:new_token
 
         Frontend->>Frontend: 更新 localStorage
         Frontend->>API: 重试原请求
