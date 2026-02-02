@@ -108,18 +108,20 @@ async def get_user(
 
 ### Depends 的工作流程
 
-```
-请求到达
-  ↓
-FastAPI 检测到 Depends(get_token)
-  ↓
-自动调用 get_token(request)
-  ↓
-get_token 返回 token
-  ↓
-将 token 注入到函数参数
-  ↓
-执行函数逻辑
+```mermaid
+flowchart TB
+    A[请求到达] --> B[FastAPI 检测到<br/>Depends(get_token)]
+    B --> C[自动调用<br/>get_token]
+    C --> D[get_token 返回 token]
+    D --> E[将 token 注入到函数参数]
+    E --> F[执行函数逻辑]
+
+    style A fill:#e1f5ff
+    style B fill:#fff4e1
+    style C fill:#ffe1f5
+    style D fill:#e1ffe1
+    style E fill:#e1f5ff
+    style F fill:#fff4e1
 ```
 
 ---
@@ -292,20 +294,24 @@ async def get_profile(
 
 ### 依赖链的执行顺序
 
-```
-请求到达
-  ↓
-Depends(get_current_user)
-  ↓
-  ├─→ Depends(get_token)
-  │    ↓
-  │    ├─→ Depends(get_db) ─────→ yield session
-  │    ↓
-  │    └─→ return token
-  ↓
-  └─→ return user
-  ↓
-执行函数逻辑
+```mermaid
+flowchart TB
+    A[请求到达] --> B[Depends<br/>get_current_user]
+    B --> C[Depends<br/>get_token]
+    C --> D[Depends<br/>get_db]
+    D --> E[yield session]
+    E --> F[return token]
+    F --> G[return user]
+    G --> H[执行函数逻辑]
+
+    style A fill:#e1f5ff
+    style B fill:#fff4e1
+    style C fill:#ffe1f5
+    style D fill:#e1ffe1
+    style E fill:#e1f5ff
+    style F fill:#fff4e1
+    style G fill:#ffe1f5
+    style H fill:#e1ffe1
 ```
 
 ---

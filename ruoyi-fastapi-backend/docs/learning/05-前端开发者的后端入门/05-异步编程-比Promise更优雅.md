@@ -23,12 +23,16 @@ getUsers().then(users => {
 
 ### Promise 的本质
 
-```
-Promise = 一个会在未来完成的操作
+```mermaid
+flowchart LR
+    A[Promise<br/>一个会在未来完成的操作] --> B[pending<br/>进行中]
+    B --> C[fulfilled<br/>成功]
+    B --> D[rejected<br/>失败]
 
-pending (进行中)
-    ↓
-fulfilled (成功)  或  rejected (失败)
+    style A fill:#e1f5ff
+    style B fill:#fff4e1
+    style C fill:#e1ffe1
+    style D fill:#ffe1f5
 ```
 
 ---
@@ -155,33 +159,19 @@ asyncio.run(main())
 ```
 
 **执行顺序**：
-```
-A 开始
-A 完成
-B 开始
-B 完成
-A 的结果 B 的结果
-```
 
-### 并发执行
+```mermaid
+flowchart TB
+    A[A 开始] --> B[A 完成]
+    B --> C[B 开始]
+    C --> D[B 完成]
+    D --> E[A 的结果 B 的结果]
 
-```python
-async def main():
-    # 并发执行 A 和 B
-    results = await asyncio.gather(
-        task_a(),  # 同时启动
-        task_b()   # 同时启动
-    )
-    print(results)  # ['A 的结果', 'B 的结果']
-```
-
-**执行顺序**：
-```
-A 开始
-B 开始  ← A 等待时，B 开始执行
-A 完成
-B 完成
-A 的结果 B 的结果
+    style A fill:#e1f5ff
+    style B fill:#e1ffe1
+    style C fill:#fff4e1
+    style D fill:#e1ffe1
+    style E fill:#ffe1f5
 ```
 
 **前端类比**：
