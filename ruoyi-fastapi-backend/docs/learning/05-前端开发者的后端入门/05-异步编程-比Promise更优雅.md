@@ -25,9 +25,13 @@ getUsers().then(users => {
 
 ```mermaid
 flowchart LR
-    A[Promise<br/>一个会在未来完成的操作] --> B[pending<br/>进行中]
-    B --> C[fulfilled<br/>成功]
-    B --> D[rejected<br/>失败]
+    A["Promise
+    一个会在未来完成的操作"] --> B["pending
+    进行中"]
+    B --> C["fulfilled
+    成功"]
+    B --> D["rejected
+    失败"]
 
     style A fill:#e1f5ff
     style B fill:#fff4e1

@@ -8,7 +8,9 @@
       "Bash(curl:*)",
       "Bash(rmdir:*)",
       "WebSearch",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(Get-ChildItem:*)",
+      "Bash(Select-Object FullName)"
     ],
     "deny": [],
     "ask": []
