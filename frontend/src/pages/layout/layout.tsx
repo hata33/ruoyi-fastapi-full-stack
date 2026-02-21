@@ -1,0 +1,194 @@
+import { FC, Suspense, useEffect, useRef, useState } from "react";
+import styles from "./layout.module.scss";
+import { Link, useLocation, useOutlet } from "react-router-dom";
+import Slider from "./slider";
+import { Breadcrumb, Button, Drawer, Dropdown, Radio } from "antd";
+import {
+  UserOutlined,
+  MoonFilled,
+  SunFilled,
+  HourglassFilled,
+  UnorderedListOutlined,
+  CheckOutlined,
+  GithubOutlined,
+  ToolOutlined,
+} from "@ant-design/icons";
+import { useAppTheme } from "@/context/theme";
+import { CSSTransition, SwitchTransition } from "react-transition-group";
+import PageLoading from "@/components/page-loading/page-loading";
+import { useUser } from "@/context/user.tsx";
+
+const primaryColors = [
+  "rgb(93, 135, 255)",
+  "rgb(180, 141, 243)",
+  "#1677ff",
+  "rgb(96, 192, 65)",
+  "rgb(56, 192, 252)",
+  "rgb(249, 144, 31)",
+  "rgb(255, 128, 200)",
+];
+
+const Layout: FC = () => {
+  const {
+    appTheme,
+    changeTheme,
+    slideExpand,
+    setSlideExpand,
+    setPrimaryColor,
+    primaryColor,
+    displaySize,
+    setDisplaySize
+  } = useAppTheme();
+  const location = useLocation();
+
+  const { logout } = useUser();
+
+  const { routes } = useUser();
+
+  const [breadItems, setBreadItems] = useState<{ title: string }[]>([]);
+
+  const currentOutlet = useOutlet();
+
+  const nodeRef = useRef<HTMLDivElement>(null);
+
+  const [openSetting, setOpenSetting] = useState(false);
+
+  useEffect(() => {
+    if (location.pathname === "/") {
+      setBreadItems([{ title: "首页" }]);
+      return;
+    }
+    setBreadItems(deepMenu(routes, location.pathname, []));
+  }, [routes, location]);
+
+  return (
+    <div className={styles.layout}>
+      <Slider />
+      <div className="top-dock">
+        <Button
+          type="text"
+          icon={<UnorderedListOutlined />}
+          onClick={() => setSlideExpand(!slideExpand)}
+        />
+        <Breadcrumb items={breadItems} />
+        
+        <Radio.Group
+          value={appTheme}
+          onChange={changeTheme}
+          size="small"
+          buttonStyle="solid"
+        >
+          <Radio.Button value="system">
+            <HourglassFilled />
+          </Radio.Button>
+          <Radio.Button value="dark">
+            <MoonFilled />
+          </Radio.Button>
+          <Radio.Button value="light">
+            <SunFilled />
+          </Radio.Button>
+        </Radio.Group>
+        <a href="https://github.com/huisheng123666/x-new-admin" target="_blank">
+          <GithubOutlined />
+        </a>
+        <Button onClick={() => setOpenSetting(true)} style={{ padding: 0, margin: 0, width: 'auto' }} icon={<ToolOutlined />} type="text"></Button>
+        <Dropdown
+          menu={{
+            items: [
+              {
+                key: "1",
+                label: (
+                  <Link to="/userinfo">
+                    <p>个人中心</p>
+                  </Link>
+                ),
+              },
+              {
+                key: "2",
+                label: <p onClick={logout}>退出登录</p>,
+              },
+            ],
+          }}
+        >
+          <UserOutlined />
+        </Dropdown>
+      </div>
+      <div className="content">
+        <Suspense fallback={<PageLoading />}>
+          <SwitchTransition>
+            <CSSTransition
+              key={location.pathname}
+              timeout={300}
+              classNames="fade"
+              nodeRef={nodeRef}
+            >
+              <div style={{ height: "100%" }} ref={nodeRef}>
+                {currentOutlet}
+              </div>
+            </CSSTransition>
+          </SwitchTransition>
+        </Suspense>
+      </div>
+
+      <Drawer
+        title="设置"
+        width={350}
+        closable={{ 'aria-label': 'Close Button' }}
+        onClose={() => setOpenSetting(false)}
+        open={openSetting}
+      >
+        <div className={styles['primary-color']}>
+          <p>强调色:</p>
+          {primaryColors.map((item) => (
+            <div
+              key={item}
+              className={["color", item === primaryColor ? "active" : ""].join(
+                " "
+              )}
+              onClick={() => setPrimaryColor(item)}
+            >
+              {item === primaryColor ? <CheckOutlined /> : null}
+            </div>
+          ))}
+        </div>
+
+        <div className={styles['display-size']}>
+          <p>显示大小:</p>
+          <Radio.Group
+            value={displaySize}
+            buttonStyle="solid"
+            onChange={(e) => {
+              setDisplaySize(e.target.value);
+            }}
+          >
+            <Radio.Button value="default">默认</Radio.Button>
+            <Radio.Button value="compact">紧凑</Radio.Button>
+          </Radio.Group>
+        </div>
+      </Drawer>
+    </div>
+  );
+};
+
+function deepMenu(
+  routes: any[],
+  path: string,
+  res: { title: string }[] = [],
+  prev = ""
+) {
+  routes.some((item) => {
+    if (!item.meta) return false;
+    if (path.startsWith(prev + item.path)) {
+      res.push({
+        title: item.meta.title,
+      });
+      if (item.children && item.children.length) {
+        deepMenu(item.children, path, res, prev + item.path + "/");
+      }
+      return true;
+    }
+  });
+  return res;
+}
+
+export default Layout;

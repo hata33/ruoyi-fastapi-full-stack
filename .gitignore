@@ -104,14 +104,14 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
-# Environments 
-# .env                # 排除根目录 .env 
-# **/.env  
-# /**/.env
-# */.env.*
-# /.env.dev
+# Environments
+# .env                # 排除根目录 .env
+**/.env
+/**/.env
+*/.env.*
+/.env.dev
 postgres_data/
-ruoyi-fastapi-backend/.env.dev
+backend/.env.dev
 .venv
 env/
 .env
@@ -119,6 +119,10 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+# 前端环境变量
+frontend/.env.local
+frontend/.env.*.local
 
 # Spyder project settings
 .spyderproject
@@ -150,3 +154,4 @@ cython_debug/
 # VSCode
 .vscode/
 
+frontend/node_modules/*

@@ -10,7 +10,14 @@
       "WebSearch",
       "Bash(xargs:*)",
       "Bash(Get-ChildItem:*)",
-      "Bash(Select-Object FullName)"
+      "Bash(Select-Object FullName)",
+      "Bash(npm install:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm add:*)",
+      "Bash(npx tailwindcss init:*)",
+      "Bash(pnpm exec tailwindcss:*)",
+      "Bash(pnpm remove:*)",
+      "Bash(python:*)"
     ],
     "deny": [],
     "ask": []

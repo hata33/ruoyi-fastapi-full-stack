@@ -43,12 +43,13 @@ uvicorn app:app --reload --port 9099
 ```
 
 ### 前端开发
+代码必须使用ts语法
+安装必须依赖使用 pnpm
+css 必须使用tailwind·css
 ```bash
 cd ruoyi-fastapi-frontend
 
-# 安装依赖
-npm install --registry=https://registry.npmmirror.com
-# 或
+# 安装依赖 
 pnpm install
 
 # 启动开发服务器

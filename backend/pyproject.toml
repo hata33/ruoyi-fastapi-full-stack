@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=42"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ruoyi-fastapi-backend"
+version = "0.1.0"
+description = "RuoYi FastAPI Backend"
+authors = [{name = "Your Name", email = "your.email@example.com"}]
+readme = "README.md"
+requires-python = ">=3.9"
+
+dependencies = [
+    "APScheduler==3.11.0",
+    "DateTime==5.5",
+    "asyncmy==0.2.10",
+    "bcrypt==3.2.2",
+    "fastapi[all]==0.115.8",
+    "loguru==0.7.3",
+    "openpyxl==3.1.5",
+    "pandas==2.2.3",
+    "passlib[bcrypt]==1.7.4",
+    "Pillow==11.1.0",
+    "psutil==7.0.0",
+    "pydantic-validation-decorator==0.1.4",
+    "PyJWT[crypto]==2.10.1",
+    "PyMySQL==1.1.1",
+    "redis==5.2.1",
+    "requests==2.32.3",
+    "SQLAlchemy[asyncio]==2.0.38",
+    "sqlglot[rs]==26.6.0",
+    "user-agents==2.2.0",
+]
+
+[project.optional-dependencies]
+postgres = [
+    "asyncpg==0.30.0",
+    "psycopg2==2.9.10",
+]
+
+[tool.uv]
+index-url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
+
+[tool.setuptools]
+packages = ["module_admin", "module_generator", "module_task", "utils", "config", "exceptions", "middlewares", "sub_applications", "vf_admin"]
