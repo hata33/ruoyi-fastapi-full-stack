@@ -1,192 +1,160 @@
-<p align="center">
-	<img alt="logo" src="https://oscimg.oschina.net/oscnet/up-d3d0a9303e11d522a06cd263f3079027715.png">
-</p>
-<h1 align="center" style="margin: 30px 0 30px; font-weight: bold;">RuoYi-Vue3-FastAPI v1.6.2</h1>
-<h4 align="center">基于RuoYi-Vue3+FastAPI前后端分离的快速开发框架</h4>
-<p align="center">
-	<a href="https://gitee.com/insistence2022/RuoYi-Vue3-FastAPI/stargazers"><img src="https://gitee.com/insistence2022/RuoYi-Vue3-FastAPI/badge/star.svg?theme=dark"></a>
-    <a href="https://github.com/insistence/RuoYi-Vue3-FastAPI"><img src="https://img.shields.io/github/stars/insistence/RuoYi-Vue3-FastAPI?style=social"></a>
-	<a href="https://gitee.com/insistence2022/RuoYi-Vue3-FastAPI"><img src="https://img.shields.io/badge/RuoYiVue3FastAPI-v1.6.2-brightgreen.svg"></a>
-	<a href="https://gitee.com/insistence2022/RuoYi-Vue3-FastAPI/blob/master/LICENSE"><img src="https://img.shields.io/github/license/mashape/apistatus.svg"></a>
-    <img src="https://img.shields.io/badge/python-≥3.9-blue">
-    <img src="https://img.shields.io/badge/MySQL-≥5.7-blue">
-</p>
+# hata 全栈项目
 
-## 平台简介
+基于 Vue3 + FastAPI + PostgreSQL + Redis 的前后端分离快速开发框架。
 
-RuoYi-Vue3-FastAPI是一套全部开源的快速开发平台，毫无保留给个人及企业免费使用。
+## 快速开始
 
-* 前端采用Vue3、Element Plus，基于<u>[RuoYi-Vue3](https://github.com/yangzongzhuan/RuoYi-Vue3)</u>前端项目修改。
-* 后端采用FastAPI、sqlalchemy、MySQL（PostgreSQL）、Redis、OAuth2 & Jwt。
-* 权限认证使用OAuth2 & Jwt，支持多终端认证系统。
-* 支持加载动态权限菜单，多方式轻松权限控制。
-* Vue2版本：
-  - Gitte仓库地址：https://gitee.com/insistence2022/RuoYi-Vue-FastAPI
-  - GitHub仓库地址：https://github.com/insistence/RuoYi-Vue-FastAPI
-* 纯Python版本：
-  - Gitte仓库地址：https://gitee.com/insistence2022/dash-fastapi-admin
-  - GitHub仓库地址：https://github.com/insistence/Dash-FastAPI-Admin
-* 特别鸣谢：<u>[RuoYi-Vue3](https://github.com/yangzongzhuan/RuoYi-Vue3)</u>
+### 环境要求
 
-## 内置功能
+- Docker & Docker Compose
+- Node.js 18+ 和 pnpm
+- Bash 4.0+
 
-1.  用户管理：用户是系统操作者，该功能主要完成系统用户配置。
-2.  角色管理：角色菜单权限分配、设置角色按机构进行数据范围权限划分。
-3.  菜单管理：配置系统菜单，操作权限，按钮权限标识等。
-4.  部门管理：配置系统组织机构（公司、部门、小组）。
-5.  岗位管理：配置系统用户所属担任职务。
-6.  字典管理：对系统中经常使用的一些较为固定的数据进行维护。
-7.  参数管理：对系统动态配置常用参数。
-8.  通知公告：系统通知公告信息发布维护。
-9.  操作日志：系统正常操作日志记录和查询；系统异常信息日志记录和查询。
-10. 登录日志：系统登录日志记录查询包含登录异常。
-11. 在线用户：当前系统中活跃用户状态监控。
-12. 定时任务：在线（添加、修改、删除）任务调度包含执行结果日志。
-13. 服务监控：监视当前系统CPU、内存、磁盘、堆栈等相关信息。
-14. 缓存监控：对系统的缓存信息查询，命令统计等。
-15. 在线构建器：拖动表单元素生成相应的HTML代码。
-16. 系统接口：根据业务代码自动生成相关的api接口文档。
-17. 代码生成：配置数据库表信息一键生成前后端代码（python、sql、vue、js），支持下载。
-
-## 演示图
-
-<table>
-    <tr>
-        <td><img src="https://gitee.com/insistence2022/RuoYi-Vue-FastAPI/raw/master/demo-pictures/login.png"/></td>
-        <td><img src="https://gitee.com/insistence2022/RuoYi-Vue-FastAPI/raw/master/demo-pictures/dashboard.png"/></td>
-    </tr>
-    <tr>
-        <td><img src="https://gitee.com/insistence2022/RuoYi-Vue-FastAPI/raw/master/demo-pictures/user.png"/></td>
-        <td><img src="https://gitee.com/insistence2022/RuoYi-Vue-FastAPI/raw/master/demo-pictures/role.png"/></td>
-    </tr>
-    <tr>
-        <td><img src="https://gitee.com/insistence2022/RuoYi-Vue-FastAPI/raw/master/demo-pictures/menu.png"/></td>
-        <td><img src="https://gitee.com/insistence2022/RuoYi-Vue-FastAPI/raw/master/demo-pictures/dept.png"/></td>
-    </tr>
-    <tr>
-        <td><img src="https://gitee.com/insistence2022/RuoYi-Vue-FastAPI/raw/master/demo-pictures/post.png"/></td>
-        <td><img src="https://gitee.com/insistence2022/RuoYi-Vue-FastAPI/raw/master/demo-pictures/dict.png"/></td>
-    </tr>	 
-    <tr>
-        <td><img src="https://gitee.com/insistence2022/RuoYi-Vue-FastAPI/raw/master/demo-pictures/config.png"/></td>
-        <td><img src="https://gitee.com/insistence2022/RuoYi-Vue-FastAPI/raw/master/demo-pictures/notice.png"/></td>
-    </tr>
-    <tr>
-        <td><img src="https://gitee.com/insistence2022/RuoYi-Vue-FastAPI/raw/master/demo-pictures/operLog.png"/></td>
-        <td><img src="https://gitee.com/insistence2022/RuoYi-Vue-FastAPI/raw/master/demo-pictures/loginLog.png"/></td>
-    </tr>
-    <tr>
-        <td><img src="https://gitee.com/insistence2022/RuoYi-Vue-FastAPI/raw/master/demo-pictures/online.png"/></td>
-        <td><img src="https://gitee.com/insistence2022/RuoYi-Vue-FastAPI/raw/master/demo-pictures/job.png"/></td>
-    </tr>
-    <tr>
-        <td><img src="https://gitee.com/insistence2022/RuoYi-Vue-FastAPI/raw/master/demo-pictures/server.png"/></td>
-        <td><img src="https://gitee.com/insistence2022/RuoYi-Vue-FastAPI/raw/master/demo-pictures/cache.png"/></td>
-    </tr>
-    <tr>
-        <td><img src="https://gitee.com/insistence2022/RuoYi-Vue-FastAPI/raw/master/demo-pictures/cacheList.png"></td>
-        <td><img src="https://gitee.com/insistence2022/RuoYi-Vue-FastAPI/raw/master/demo-pictures/form.png"></td>
-    </tr>
-    <tr>
-        <td><img src="https://gitee.com/insistence2022/RuoYi-Vue-FastAPI/raw/master/demo-pictures/api.png"></td>
-        <td><img src="https://gitee.com/insistence2022/RuoYi-Vue-FastAPI/raw/master/demo-pictures/gen.png"/></td>
-    </tr>
-    <tr>
-        <td><img src="https://gitee.com/insistence2022/RuoYi-Vue-FastAPI/raw/master/demo-pictures/profile.png"/></td>
-    </tr>
-</table>
-
-## 在线体验
-- *账号：admin*
-- *密码：admin123*
-- 演示地址：<a href="https://vfadmin.insistence.tech">vfadmin管理系统<a>
-
-## 项目开发及发布相关
-
-### 开发
+### 一键部署
 
 ```bash
-# 克隆项目
-git clone https://gitee.com/insistence2022/RuoYi-Vue3-FastAPI.git
+# 1. 拉取代码
+git pull origin main
 
-# 进入项目根目录
-cd RuoYi-Vue3-FastAPI
+# 2. 构建前后端
+./scripts/build-all.sh
+
+# 3. 加载镜像
+docker load -i hata-server-latest.tar
+
+# 4. 启动服务
+docker-compose up -d
+
+# 5. 查看状态
+docker-compose ps
 ```
 
-#### 前端
+## 访问地址
+
+- 前端: http://localhost:8081
+- 后端: http://localhost:8001
+- API文档: http://localhost:8001/docs
+- 默认账号: admin / admin123
+
+## 项目结构
+
+```
+├── backend/              # FastAPI 后端
+├── frontend/             # Vue3 前端
+├── conf/                 # 配置文件
+│   ├── nginx.conf
+│   ├── redis.conf
+│   └── ssl/
+├── scripts/              # 构建脚本
+├── docker-compose.yml
+├── fastapi-dockerfile
+└── nginx-dockerfile
+```
+
+## 构建脚本
+
+| 脚本 | 说明 |
+|------|------|
+| `./scripts/build-all.sh` | 构建前后端 |
+| `./scripts/build-frontend.sh` | 仅构建前端 |
+| `./scripts/build-server.sh` | 仅构建后端 |
+
+参数：`--clean` (清理旧文件) `--no-color` (无彩色输出)
+
+## 常用命令
+
 ```bash
-# 进入前端目录
-cd ruoyi-fastapi-frontend
+# 查看日志
+docker-compose logs -f
 
-# 安装依赖
-npm install 或 yarn --registry=https://registry.npmmirror.com
+# 重启服务
+docker-compose restart
 
-# 建议不要直接使用 cnpm 安装依赖，会有各种诡异的 bug。可以通过如下操作解决 npm 下载速度慢的问题
-npm install --registry=https://registry.npmmirror.com
+# 停止服务
+docker-compose down
 
-# 启动服务
-npm run dev 或 yarn dev
+# 仅更新前端
+./scripts/build-frontend.sh
+
+# 仅更新后端
+./scripts/build-server.sh && docker load -i hata-server-latest.tar && docker-compose up -d hata-server
 ```
 
-#### 后端
+## 端口映射
+
+| 服务 | 端口 |
+|------|------|
+| 前端 HTTP | 8081 |
+| 前端 HTTPS | 8443 |
+| 后端 API | 8001 |
+| PostgreSQL | 5433 |
+| Redis | 6380 |
+
+## 环境变量
+
+复制 `.env` 文件并修改配置：
+
 ```bash
-# 进入后端目录
-cd ruoyi-fastapi-backend
+# 容器前缀
+CONTAINER_PREFIX=hata
 
-# 如果使用的是MySQL数据库，请执行以下命令安装项目依赖环境
-pip3 install -r requirements.txt
-# 如果使用的是PostgreSQL数据库，请执行以下命令安装项目依赖环境
-pip3 install -r requirements-pg.txt
+# 数据库
+POSTGRESQL_PORT=5433
+POSTGRESQL_ROOT_NAME=postgres
+POSTGRESQL_ROOT_PASSWORD=your_password
 
-# 配置环境
-在.env.dev文件中配置开发环境的数据库和redis
+# Redis
+REDIS_PORT=6380
+REDIS_PASSWORD=your_password
 
-# 运行sql文件
-1.新建数据库ruoyi-fastapi(默认，可修改)
-2.如果使用的是MySQL数据库，使用命令或数据库连接工具运行sql文件夹下的ruoyi-fastapi.sql；如果使用的是PostgreSQL数据库，使用命令或数据库连接工具运行sql文件夹下的ruoyi-fastapi-pg.sql
-
-# 运行后端
-python3 app.py --env=dev
+# 服务端口
+SERVER_PORT=8001
+NGINX_PORT_1=8081
+NGINX_PORT_2=8443
 ```
 
-#### 访问
+## 故障排查
+
+### 容器启动失败
+
 ```bash
-# 默认账号密码
-账号：admin
-密码：admin123
+# 查看日志
+docker-compose logs <service-name>
 
-# 浏览器访问
-地址：http://localhost:80
+# 检查端口占用
+netstat -tulpn | grep <port>
 ```
 
-### 发布
+### 前端无法访问
 
-#### 前端
 ```bash
-# 构建测试环境
-npm run build:stage 或 yarn build:stage
+# 检查构建产物
+ls -la html/dist/
 
-# 构建生产环境
-npm run build:prod 或 yarn build:prod
+# 重新构建
+./scripts/build-frontend.sh --clean
 ```
 
-#### 后端
+### 后端连接失败
+
 ```bash
-# 配置环境
-在.env.prod文件中配置生产环境的数据库和redis
+# 检查数据库
+docker-compose logs hata-postgresql
 
-# 运行后端
-python3 app.py --env=prod
+# 检查 Redis
+docker-compose logs hata-redis
 ```
 
-## 交流与赞助
-如果有对本项目及FastAPI感兴趣的朋友，欢迎加入知识星球一起交流学习，让我们一起变得更强。如果你觉得这个项目帮助到了你，你可以请作者喝杯咖啡表示鼓励☕。扫描下面微信二维码添加微信备注VF-Admin即可进群。
-<table>
-    <tr>
-        <td><img alt="zsxq" src="https://gitee.com/insistence2022/RuoYi-Vue-FastAPI/raw/master/demo-pictures/zsxq.jpg"></td>
-        <td><img alt="zanzhu" src="https://gitee.com/insistence2022/RuoYi-Vue-FastAPI/raw/master/demo-pictures/zanzhu.jpg"></td>
-    </tr>
-    <tr>
-        <td><img alt="wxcode" src="https://gitee.com/insistence2022/RuoYi-Vue-FastAPI/raw/master/demo-pictures/wxcode.jpg"></td>
-    </tr>
-</table>
+## 备份
+
+```bash
+# 备份数据库
+docker exec postgresql pg_dump -U postgres hata-service-platform > backup.sql
+
+# 备份上传文件
+tar -czf uploads-backup.tar.gz hata/uploadPath/
+```
+
+## License
+
+MIT
