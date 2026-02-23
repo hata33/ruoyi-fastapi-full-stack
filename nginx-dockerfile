@@ -10,11 +10,11 @@ RUN apk add --no-cache curl
 RUN mkdir -p /var/log/nginx /usr/share/nginx/html /app/uploads
 
 # 复制 nginx 配置
-COPY ./docker/nginx/nginx.conf /etc/nginx/nginx.conf
-COPY ./docker/nginx/conf.d/ /etc/nginx/conf.d/
+COPY ./conf/nginx.conf /etc/nginx/nginx.conf
 
-# 复制 SSL 证书（如果有）
-COPY ./docker/nginx/ssl/ /etc/nginx/ssl/
+# 复制 SSL 证书
+COPY ./conf/ssl/ssl.key /etc/nginx/private.key
+COPY ./conf/ssl/ssl.cer /etc/nginx/self-sign.cer
 
 # 设置权限
 RUN chown -R nginx:nginx /var/log/nginx /usr/share/nginx/html /app/uploads
