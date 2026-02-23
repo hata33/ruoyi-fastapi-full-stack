@@ -154,7 +154,6 @@ html/
 postgre-data/
 postgres_data/
 redis/
-nginx-html/
 nginx/logs/
 
 # Spyder project settings

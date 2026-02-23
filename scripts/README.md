@@ -79,11 +79,23 @@ docker-compose up -d
 docker-compose logs -f
 ```
 
-### 仅更新前端：
+### 仅更新前端（本地构建）：
 
 ```bash
 ./scripts/build-frontend.sh
 # 无需重启，nginx 会自动使用新文件
+```
+
+### 仅更新前端（tar 包部署）：
+
+```bash
+# 本地打包
+./frontend/build-tar.sh
+# 输出: frontend/hata-frontend-latest.tar
+
+# 服务器部署
+./nginx-html/deploy.sh hata-frontend-latest.tar
+# 自动备份、解压、重启nginx
 ```
 
 ### 仅更新后端：
