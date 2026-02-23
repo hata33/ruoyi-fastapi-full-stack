@@ -140,28 +140,22 @@ echo -e "${BLUE}==== Exporting Image ====${RESET}"
 docker save -o "$OUTPUT_FILE" "${IMAGE_NAME}:${IMAGE_TAG}"
 
 if [ $? -eq 0 ] && [ -f "$OUTPUT_FILE" ]; then
-    # Get file size
+    # Get file size and format (using awk instead of bc)
     if stat -c%s "$OUTPUT_FILE" >/dev/null 2>&1; then
-        size=$(stat -c%s "$OUTPUT_FILE")
+        size_bytes=$(stat -c%s "$OUTPUT_FILE")
     elif stat -f%z "$OUTPUT_FILE" >/dev/null 2>&1; then
-        size=$(stat -f%z "$OUTPUT_FILE")
+        size_bytes=$(stat -f%z "$OUTPUT_FILE")
     else
-        size=$(wc -c < "$OUTPUT_FILE")
+        size_bytes=$(wc -c < "$OUTPUT_FILE")
     fi
 
-    # Format size
-    if [ $size -gt 1073741824 ]; then
-        size_mb=$(echo "scale=2; $size / 1073741824" | bc)
-        size_str="${size_mb} GB"
-    elif [ $size -gt 1048576 ]; then
-        size_mb=$(echo "scale=2; $size / 1048576" | bc)
-        size_str="${size_mb} MB"
-    elif [ $size -gt 1024 ]; then
-        size_kb=$(echo "scale=2; $size / 1024" | bc)
-        size_str="${size_kb} KB"
-    else
-        size_str="${size} B"
-    fi
+    # Format size using awk (no bc needed)
+    size_str=$(echo "$size_bytes" | awk '{
+        if ($1 >= 1073741824) printf "%.2f GB", $1/1073741824
+        else if ($1 >= 1048576) printf "%.2f MB", $1/1048576
+        else if ($1 >= 1024) printf "%.2f KB", $1/1024
+        else printf "%d B", $1
+    }')
 
     echo -e "${GREEN}[SUCCESS] Image exported${RESET}"
     echo "File: $OUTPUT_FILE"
