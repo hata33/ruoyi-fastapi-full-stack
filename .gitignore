@@ -111,7 +111,7 @@ celerybeat.pid
 # .env                # 排除根目录 .env
 **/.env
 /**/.env
-*/.env.*
+# */.env.*           # 注释掉通配符规则，允许特定的 .env 文件
 /.env.dev
 postgres_data/
 backend/.env.dev
@@ -122,6 +122,10 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+# 允许 Docker 环境配置文件
+!backend/.env.docker
+!frontend/.env.docker
 
 # 前端环境变量
 frontend/.env.local
