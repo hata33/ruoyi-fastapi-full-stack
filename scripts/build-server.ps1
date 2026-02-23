@@ -1,32 +1,32 @@
 <#
 .SYNOPSIS
-    TCM Server Docker 镜像构建脚本 (PowerShell版本)
+    hata Server Docker Image Build Script (PowerShell)
 
 .DESCRIPTION
-    构建 Docker 镜像并导出为 tar 文件
-    输出: tcm-server-latest.tar
-    镜像名称: tcm-server:latest
+    Build Docker image and export as tar file
+    Output: hata-server-latest.tar
+    Image name: hata-server:latest
 
 .PARAMETER Clean
-    在构建前清理旧镜像和文件
+    Clean old images and files before building
 
 .PARAMETER NoColor
-    禁用彩色输出
+    Disable colored output
 
 .EXAMPLE
     .\build-server.ps1
-    基本构建
+    Basic build
 
 .EXAMPLE
     .\build-server.ps1 -Clean
-    构建前清理
+    Build with cleanup
 
 .EXAMPLE
     .\build-server.ps1 -NoColor
-    无彩色输出
+    Build without colored output
 
 .NOTES
-    需要安装 Docker Desktop 和 PowerShell 5.1+
+    Requires Docker Desktop and PowerShell 5.1+
 #>
 
 [CmdletBinding()]
@@ -36,23 +36,23 @@ param(
 )
 
 # =============================================================================
-# 配置和初始化
+# Configuration and Initialization
 # =============================================================================
 
-# 设置错误处理首选项
+# Error handling preferences
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
-# 配置变量
+# Configuration variables
 $Script:Config = @{
-    ImageName = "tcm-server"
+    ImageName = "hata-server"
     ImageTag = "latest"
     DockerfilePath = "./fastapi-dockerfile"
-    OutputTarFile = "tcm-server-latest.tar"
+    OutputTarFile = "hata-server-latest.tar"
     BuildContext = "."
 }
 
-# 颜色配置
+# Color configuration
 $Script:Colors = @{
     Red = if ($NoColor) { "" } else { "Red" }
     Green = if ($NoColor) { "" } else { "Green" }
@@ -64,7 +64,7 @@ $Script:Colors = @{
 }
 
 # =============================================================================
-# 工具函数
+# Utility Functions
 # =============================================================================
 
 function Write-ColorMessage {
@@ -86,7 +86,7 @@ function Write-Step {
     param([string]$Message)
 
     Write-Host ""
-    Write-ColorMessage "==================== $Message ====================" "Blue"
+    Write-ColorMessage "==== $Message ====" "Blue"
     Write-Host ""
 }
 
@@ -108,7 +108,7 @@ function Write-Warn {
     Write-Host $Message
 }
 
-function Write-Error {
+function Write-Error-Msg {
     param([string]$Message)
     Write-ColorMessage "[ERROR] " "Red" -NoNewline
     Write-Host $Message
@@ -122,37 +122,6 @@ function Test-Command {
         return $true
     } catch {
         return $false
-    }
-}
-
-function Invoke-CommandWithOutput {
-    param(
-        [string]$Command,
-        [string]$Arguments = "",
-        [switch]$Silent,
-        [switch]$NoError
-    )
-
-    $fullCommand = "$Command $Arguments".Trim()
-    Write-Info "执行命令: $fullCommand"
-
-    try {
-        if ($Silent) {
-            $result = & $Command $Arguments.Split(" ") 2>&1
-            if ($LASTEXITCODE -ne 0 -and -not $NoError) {
-                throw "命令执行失败，退出码: $LASTEXITCODE"
-            }
-            return $result
-        } else {
-            & $Command $Arguments.Split(" ")
-            if ($LASTEXITCODE -ne 0 -and -not $NoError) {
-                throw "命令执行失败，退出码: $LASTEXITCODE"
-            }
-        }
-    } catch {
-        if (-not $NoError) {
-            throw
-        }
     }
 }
 
@@ -172,92 +141,84 @@ function Format-FileSize {
 }
 
 # =============================================================================
-# 主要功能函数
+# Main Functions
 # =============================================================================
 
 function Test-DockerEnvironment {
-    Write-Step "检查 Docker 环境"
+    Write-Step "Checking Docker Environment"
 
-    # 检查Docker命令是否可用
+    # Check if Docker command is available
     if (-not (Test-Command "docker")) {
-        Write-Error "Docker 未安装或未在 PATH 中"
-        Write-Info "请安装 Docker Desktop: https://www.docker.com/products/docker-desktop"
+        Write-Error-Msg "Docker is not installed or not in PATH"
+        Write-Info "Please install Docker Desktop: https://www.docker.com/products/docker-desktop"
         exit 1
     }
 
-    # 检查Docker服务是否运行
+    # Display Docker version info (this also confirms Docker is working)
     try {
-        $dockerInfo = docker info 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            Write-Error "Docker 服务未运行或权限不足"
-            Write-Info "请确保 Docker Desktop 正在运行"
+        $dockerVersion = docker --version 2>&1
+        if ($dockerVersion) {
+            Write-Success "Docker environment check passed"
+            Write-Info "Docker version: $dockerVersion"
+        } else {
+            Write-Error-Msg "Cannot get Docker version"
             exit 1
         }
     } catch {
-        Write-Error "无法连接到 Docker 服务"
-        Write-Info "请启动 Docker Desktop 并重试"
+        Write-Error-Msg "Docker command failed: $($_.Exception.Message)"
         exit 1
-    }
-
-    # 显示Docker版本信息
-    try {
-        $dockerVersion = docker --version
-        Write-Success "Docker 环境检查通过"
-        Write-Info "Docker 版本: $dockerVersion"
-    } catch {
-        Write-Warn "无法获取Docker版本信息"
     }
 }
 
 function Remove-OldArtifacts {
-    Write-Step "清理旧文件"
+    Write-Step "Cleaning Old Files"
 
     $imageName = $Script:Config.ImageName
     $imageTag = $Script:Config.ImageTag
     $fullImageName = "$imageName`:$imageTag"
     $outputTarFile = $Script:Config.OutputTarFile
 
-    # 清理旧镜像
+    # Clean old images
     try {
         $imageId = docker images -q "$fullImageName" 2>$null
         if ($imageId) {
-            Write-Warn "发现旧镜像 $fullImageName，正在删除..."
+            Write-Warn "Found old image $fullImageName, deleting..."
             docker rmi "$fullImageName" 2>$null
             if ($LASTEXITCODE -eq 0) {
-                Write-Success "旧镜像删除成功"
+                Write-Success "Old image deleted successfully"
             } else {
-                Write-Warn "警告: 无法删除旧镜像，可能正在被使用"
+                Write-Warn "Warning: Cannot delete old image, may be in use"
             }
         }
     } catch {
-        Write-Warn "清理旧镜像时出现警告"
+        Write-Warn "Warning while cleaning old image"
     }
 
-    # 清理旧tar文件
+    # Clean old tar file
     if (Test-Path $outputTarFile) {
-        Write-Warn "发现旧tar文件 $outputTarFile，正在删除..."
+        Write-Warn "Found old tar file $outputTarFile, deleting..."
         try {
             Remove-Item $outputTarFile -Force
-            Write-Success "旧tar文件删除成功"
+            Write-Success "Old tar file deleted successfully"
         } catch {
-            Write-Warn "无法删除旧tar文件: $($_.Exception.Message)"
+            Write-Warn "Cannot delete old tar file: $($_.Exception.Message)"
         }
     }
 
-    # 清理悬空镜像（可选）
+    # Clean dangling images (optional)
     if ($Clean) {
-        Write-Info "清理悬空镜像..."
+        Write-Info "Cleaning dangling images..."
         try {
             docker image prune -f >$null
-            Write-Success "悬空镜像清理完成"
+            Write-Success "Dangling images cleanup completed"
         } catch {
-            Write-Warn "清理悬空镜像时出现警告"
+            Write-Warn "Warning while cleaning dangling images"
         }
     }
 }
 
 function Build-DockerImage {
-    Write-Step "构建 Docker 镜像"
+    Write-Step "Building Docker Image"
 
     $imageName = $Script:Config.ImageName
     $imageTag = $Script:Config.ImageTag
@@ -265,18 +226,18 @@ function Build-DockerImage {
     $buildContext = $Script:Config.BuildContext
     $fullImageName = "$imageName`:$imageTag"
 
-    Write-Info "镜像名称: $fullImageName"
-    Write-Info "Dockerfile 路径: $dockerfilePath"
-    Write-Info "构建上下文: $buildContext"
+    Write-Info "Image name: $fullImageName"
+    Write-Info "Dockerfile path: $dockerfilePath"
+    Write-Info "Build context: $buildContext"
 
-    # 检查Dockerfile是否存在
+    # Check if Dockerfile exists
     if (-not (Test-Path $dockerfilePath)) {
-        Write-Error "Dockerfile 不存在: $dockerfilePath"
+        Write-Error-Msg "Dockerfile not found: $dockerfilePath"
         exit 1
     }
 
     try {
-        Write-Info "开始构建镜像..."
+        Write-Info "Starting image build..."
         $buildArgs = @(
             "build",
             "-f", $dockerfilePath,
@@ -287,23 +248,23 @@ function Build-DockerImage {
         & docker $buildArgs
 
         if ($LASTEXITCODE -eq 0) {
-            Write-Success "镜像构建成功!"
+            Write-Success "Image built successfully!"
 
-            # 显示镜像信息
-            Write-Info "镜像信息:"
+            # Display image info
+            Write-Info "Image info:"
             docker images "$fullImageName"
         } else {
-            Write-Error "镜像构建失败!"
+            Write-Error-Msg "Image build failed!"
             exit 1
         }
     } catch {
-        Write-Error "构建过程中发生错误: $($_.Exception.Message)"
+        Write-Error-Msg "Error during build: $($_.Exception.Message)"
         exit 1
     }
 }
 
 function Export-DockerImage {
-    Write-Step "导出镜像为 tar 文件"
+    Write-Step "Exporting Image to tar File"
 
     $imageName = $Script:Config.ImageName
     $imageTag = $Script:Config.ImageTag
@@ -311,135 +272,135 @@ function Export-DockerImage {
     $fullImageName = "$imageName`:$imageTag"
 
     try {
-        Write-Info "导出镜像: $fullImageName"
-        Write-Info "输出文件: $outputTarFile"
+        Write-Info "Exporting image: $fullImageName"
+        Write-Info "Output file: $outputTarFile"
 
         docker save -o $outputTarFile $fullImageName
 
         if ($LASTEXITCODE -eq 0 -and (Test-Path $outputTarFile)) {
             $fileSize = (Get-Item $outputTarFile).Length
             $formattedSize = Format-FileSize $fileSize
-            Write-Success "镜像导出成功!"
-            Write-Info "文件名: $outputTarFile"
-            Write-Info "文件大小: $formattedSize"
+            Write-Success "Image exported successfully!"
+            Write-Info "File name: $outputTarFile"
+            Write-Info "File size: $formattedSize"
         } else {
-            Write-Error "镜像导出失败!"
+            Write-Error-Msg "Image export failed!"
             exit 1
         }
     } catch {
-        Write-Error "导出过程中发生错误: $($_.Exception.Message)"
+        Write-Error-Msg "Error during export: $($_.Exception.Message)"
         exit 1
     }
 }
 
 function Test-TarFile {
-    Write-Step "验证 tar 文件"
+    Write-Step "Verifying tar File"
 
     $outputTarFile = $Script:Config.OutputTarFile
 
     if (-not (Test-Path $outputTarFile)) {
-        Write-Error "tar 文件不存在: $outputTarFile"
+        Write-Error-Msg "tar file not found: $outputTarFile"
         exit 1
     }
 
     try {
-        Write-Info "验证文件完整性..."
+        Write-Info "Verifying file integrity..."
 
-        # 检查是否为有效的tar文件
+        # Check if valid tar file
         if (Test-Command "tar") {
             $result = tar -tf $outputTarFile 2>$null
             if ($LASTEXITCODE -eq 0) {
-                Write-Success "tar 文件验证通过!"
+                Write-Success "tar file verification passed!"
             } else {
-                Write-Error "tar 文件格式无效!"
+                Write-Error-Msg "Invalid tar file format!"
                 exit 1
             }
         } else {
-            Write-Warn "tar 命令不可用，跳过文件格式验证"
+            Write-Warn "tar command not available, skipping file format verification"
         }
 
-        # 显示文件信息
+        # Display file info
         $fileInfo = Get-Item $outputTarFile
         $formattedSize = Format-FileSize $fileInfo.Length
-        Write-Info "文件路径: $($fileInfo.FullName)"
-        Write-Info "文件大小: $formattedSize"
-        Write-Info "创建时间: $($fileInfo.CreationTime)"
-        Write-Info "修改时间: $($fileInfo.LastWriteTime)"
+        Write-Info "File path: $($fileInfo.FullName)"
+        Write-Info "File size: $formattedSize"
+        Write-Info "Created: $($fileInfo.CreationTime)"
+        Write-Info "Modified: $($fileInfo.LastWriteTime)"
 
     } catch {
-        Write-Error "验证过程中发生错误: $($_.Exception.Message)"
+        Write-Error-Msg "Error during verification: $($_.Exception.Message)"
         exit 1
     }
 }
 
 function Show-BuildInfo {
-    Write-Step "构建完成"
+    Write-Step "Build Completed"
 
     $imageName = $Script:Config.ImageName
     $imageTag = $Script:Config.ImageTag
     $outputTarFile = $Script:Config.OutputTarFile
     $fullImageName = "$imageName`:$imageTag"
 
-    Write-ColorMessage "镜像名称: " "Green" -NoNewline
+    Write-ColorMessage "Image name: " "Green" -NoNewline
     Write-Host $fullImageName
 
-    Write-ColorMessage "输出文件: " "Green" -NoNewline
+    Write-ColorMessage "Output file: " "Green" -NoNewline
     Write-Host $outputTarFile
 
     if (Test-Path $outputTarFile) {
         $filePath = (Resolve-Path $outputTarFile).Path
-        Write-ColorMessage "文件路径: " "Green" -NoNewline
+        Write-ColorMessage "File path: " "Green" -NoNewline
         Write-Host $filePath
     }
 
     Write-Host ""
-    Write-ColorMessage "使用方法:" "Cyan"
-    Write-ColorMessage "1. 加载镜像: " "White" -NoNewline
+    Write-ColorMessage "Usage:" "Cyan"
+    Write-ColorMessage "1. Load image: " "White" -NoNewline
     Write-Host "docker load -i $outputTarFile"
-    Write-ColorMessage "2. 运行容器: " "White" -NoNewline
-    Write-Host "docker run -d -p 9099:9099 --name tcm-server $fullImageName"
+    Write-ColorMessage "2. Run container: " "White" -NoNewline
+    Write-Host "docker run -d -p 9099:9099 --name hata-server $fullImageName"
     Write-Host ""
 }
 
 function Invoke-CleanupOnFailure {
-    Write-Warn "构建失败，正在清理..."
+    Write-Warn "Build failed, cleaning up..."
 
     $imageName = $Script:Config.ImageName
     $imageTag = $Script:Config.ImageTag
     $outputTarFile = $Script:Config.OutputTarFile
     $fullImageName = "$imageName`:$imageTag"
 
-    # 清理镜像
+    # Clean image
     try {
         docker rmi "$fullImageName" 2>$null
     } catch {
-        # 忽略删除错误
+        # Ignore deletion errors
     }
 
-    # 清理tar文件
+    # Clean tar file
     if (Test-Path $outputTarFile) {
         try {
             Remove-Item $outputTarFile -Force -ErrorAction SilentlyContinue
         } catch {
-            # 忽略删除错误
+            # Ignore deletion errors
         }
     }
 }
 
 # =============================================================================
-# 主函数
+# Main Function
 # =============================================================================
 
 function Start-BuildProcess {
     [CmdletBinding()]
     param()
 
-    Write-ColorMessage "==================== TCM Server 构建脚本 (PowerShell) ====================" "Green"
-    Write-ColorMessage "开始时间: " "Blue" -NoNewline
-    Write-Host $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+    Write-ColorMessage "==== hata Server Build Script (PowerShell) ====" "Green"
+    Write-ColorMessage "Start time: " "Blue" -NoNewline
+    Write-Host $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
 
     try {
-        # 执行构建流程
+        # Execute build process
         Test-DockerEnvironment
         Remove-OldArtifacts
         Build-DockerImage
@@ -447,37 +408,31 @@ function Start-BuildProcess {
         Test-TarFile
         Show-BuildInfo
 
-        Write-ColorMessage "`n构建完成! 结束时间: " "Green" -NoNewline
-        Write-Host $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+        Write-ColorMessage "`nBuild completed! End time: " "Green" -NoNewline
+        Write-Host $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
 
     } catch {
-        Write-Error "构建过程中发生错误: $($_.Exception.Message)"
+        Write-Error-Msg "Error during build: $($_.Exception.Message)"
         Invoke-CleanupOnFailure
         exit 1
     }
 }
 
 # =============================================================================
-# 脚本入口
+# Script Entry Point
 # =============================================================================
 
-# 检查PowerShell版本
+# Check PowerShell version
 if ($PSVersionTable.PSVersion.Major -lt 5) {
-    Write-Error "需要 PowerShell 5.1 或更高版本"
+    Write-Error-Msg "PowerShell 5.1 or higher is required"
     exit 1
 }
 
-# 检查是否以管理员权限运行（可选）
-# $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-# if ($isAdmin) {
-#     Write-Warn "检测到管理员权限，构建过程中请谨慎操作"
-# }
-
-# 显示帮助信息
+# Display help
 if ($args -contains "-h" -or $args -contains "--help" -or $args -contains "help") {
     Get-Help $MyInvocation.MyCommand.Path -Full
     exit 0
 }
 
-# 启动构建流程
+# Start build process
 Start-BuildProcess

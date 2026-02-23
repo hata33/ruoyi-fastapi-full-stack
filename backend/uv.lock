@@ -1793,6 +1793,7 @@ source = { editable = "." }
 dependencies = [
     { name = "apscheduler" },
     { name = "asyncmy" },
+    { name = "asyncpg" },
     { name = "bcrypt" },
     { name = "datetime" },
     { name = "fastapi", extra = ["all"] },
@@ -1802,6 +1803,7 @@ dependencies = [
     { name = "passlib", extra = ["bcrypt"] },
     { name = "pillow" },
     { name = "psutil" },
+    { name = "psycopg2" },
     { name = "pydantic-validation-decorator" },
     { name = "pyjwt", extra = ["crypto"] },
     { name = "pymysql" },
@@ -1822,6 +1824,7 @@ postgres = [
 requires-dist = [
     { name = "apscheduler", specifier = "==3.11.0" },
     { name = "asyncmy", specifier = "==0.2.10" },
+    { name = "asyncpg", specifier = "==0.30.0" },
     { name = "asyncpg", marker = "extra == 'postgres'", specifier = "==0.30.0" },
     { name = "bcrypt", specifier = "==3.2.2" },
     { name = "datetime", specifier = "==5.5" },
@@ -1832,6 +1835,7 @@ requires-dist = [
     { name = "passlib", extras = ["bcrypt"], specifier = "==1.7.4" },
     { name = "pillow", specifier = "==11.1.0" },
     { name = "psutil", specifier = "==7.0.0" },
+    { name = "psycopg2", specifier = "==2.9.10" },
     { name = "psycopg2", marker = "extra == 'postgres'", specifier = "==2.9.10" },
     { name = "pydantic-validation-decorator", specifier = "==0.1.4" },
     { name = "pyjwt", extras = ["crypto"], specifier = "==2.10.1" },
