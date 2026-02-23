@@ -25,16 +25,52 @@ set -e  # Exit on error
 # Configuration and Initialization
 # =============================================================================
 
-# Script directory
+# Script directory and project root detection
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+
+# Try to find project root by looking for key files/directories
+# The script expects to be run from: <project-root>/scripts/build-server.sh
+# Or we can detect the project root automatically
+PROJECT_ROOT=""
+
+# First, try to go up one level (assuming script is in scripts/ subdirectory)
+if [ -d "${SCRIPT_DIR}/../backend" ] && [ -f "${SCRIPT_DIR}/../fastapi-dockerfile" ]; then
+    PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+# Second, try current directory if script is at project root
+elif [ -d "./backend" ] && [ -f "./fastapi-dockerfile" ]; then
+    PROJECT_ROOT="$(pwd)"
+# Third, check if we're already in scripts directory but need to go up
+elif [ -f "${SCRIPT_DIR}/fastapi-dockerfile" ]; then
+    PROJECT_ROOT="${SCRIPT_DIR}"
+else
+    # Last resort: search upward for project markers
+    SEARCH_DIR="$(pwd)"
+    while [ "$SEARCH_DIR" != "/" ]; do
+        if [ -f "$SEARCH_DIR/fastapi-dockerfile" ] && [ -d "$SEARCH_DIR/backend" ]; then
+            PROJECT_ROOT="$SEARCH_DIR"
+            break
+        fi
+        SEARCH_DIR="$(dirname "$SEARCH_DIR")"
+    done
+fi
+
+# If still not found, error out
+if [ -z "$PROJECT_ROOT" ]; then
+    echo "ERROR: Cannot find project root directory!"
+    echo "Please run this script from the project root or from the scripts/ directory."
+    echo "Expected to find: fastapi-dockerfile and backend/ directory"
+    exit 1
+fi
+
+# Change to project root
+cd "$PROJECT_ROOT"
 
 # Configuration variables
 IMAGE_NAME="hata-server"
 IMAGE_TAG="latest"
-DOCKERFILE_PATH="./fastapi-dockerfile"
-OUTPUT_TAR_FILE="hata-server-latest.tar"
-BUILD_CONTEXT="."
+DOCKERFILE_PATH="${PROJECT_ROOT}/fastapi-dockerfile"
+OUTPUT_TAR_FILE="${PROJECT_ROOT}/hata-server-latest.tar"
+BUILD_CONTEXT="${PROJECT_ROOT}"
 
 # Parse command line arguments
 CLEAN=false
@@ -140,6 +176,10 @@ format_file_size() {
 test_docker_environment() {
     write_step "Checking Docker Environment"
 
+    # Show detected project root
+    write_info "Project root: $PROJECT_ROOT"
+    write_info "Script location: $SCRIPT_DIR"
+
     # Check if Docker command is available
     if ! command_exists docker; then
         write_error "Docker is not installed or not in PATH"
@@ -210,6 +250,21 @@ build_docker_image() {
     # Check if Dockerfile exists
     if [ ! -f "$DOCKERFILE_PATH" ]; then
         write_error "Dockerfile not found: $DOCKERFILE_PATH"
+        write_info "Current directory: $(pwd)"
+        write_info "Project root: $PROJECT_ROOT"
+        write_info "Please check the file structure:"
+        write_info "  - fastapi-dockerfile should be at: $PROJECT_ROOT/fastapi-dockerfile"
+        write_info "  - backend/ directory should be at: $PROJECT_ROOT/backend/"
+        exit 1
+    fi
+
+    # Check if backend directory exists
+    if [ ! -d "${PROJECT_ROOT}/backend" ]; then
+        write_error "Backend directory not found: ${PROJECT_ROOT}/backend"
+        write_info "The Dockerfile expects a backend/ directory with:"
+        write_info "  - backend/requirements.txt"
+        write_info "  - backend/requirements-pg.txt"
+        write_info "  - backend/ (application code)"
         exit 1
     fi
 
