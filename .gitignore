@@ -27,7 +27,13 @@ share/python-wheels/
 MANIFEST
 redis/*
 postgre-data/*
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 *.tar
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

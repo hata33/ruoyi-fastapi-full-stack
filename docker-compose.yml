@@ -61,9 +61,9 @@ services:
       DB_DATABASE: "hata-service-platform"
       # Redis 配置（覆盖 .env.docker 中的配置）
       REDIS_HOST: hata-redis
-      REDIS_PORT: 8761  
+      REDIS_PORT: 8761
       REDIS_USERNAME: ""
-      REDIS_PASSWORD: "gemr20241105test"
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
       REDIS_DATABASE: 2
     extra_hosts:
       - "host.docker.internal:host-gateway"
