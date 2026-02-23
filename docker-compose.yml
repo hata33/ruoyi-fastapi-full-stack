@@ -1,151 +1,109 @@
-version: '3.8'
-
 # 定义共享的环境变量块
 x-shared-env: &shared-env
   TZ: Asia/Shanghai
-  PYTHONUNBUFFERED: 1
 
 # 定义网络
 networks:
-  app-network:
+  hata-network:
     name: ${CONTAINER_PREFIX}-network
-    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.100.100.0/24  # 指定一个未被占用的子网
 
 services:
-  # PostgreSQL 数据库服务
-  app-postgres:
-    container_name: ${CONTAINER_PREFIX}-postgres
+  hata-postgresql:
     image: postgres:15
-    build:
-      context: .
-      dockerfile: postgres-dockerfile
-    ports:
-      - "${POSTGRES_PORT}:5432"
-    volumes:
-      - ./postgres_data:/var/lib/postgresql/data
-      - ./docker/postgres/init:/docker-entrypoint-initdb.d
-      - ./ruoyi-fastapi-backend/sql:/docker-entrypoint-initdb.d/sql
-    environment:
-      <<: *shared-env
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    networks:
-      - app-network
+    container_name: postgresql
     restart: unless-stopped
+    ports:
+      - "${POSTGRESQL_PORT}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRESQL_ROOT_NAME}           # 自定义用户名
+      POSTGRES_PASSWORD: ${POSTGRESQL_ROOT_PASSWORD}   # 自定义密码
+      POSTGRES_DB: "hata-service-platform"         # 自定义数据库名
+      LANG: "C.UTF-8"
+    volumes:
+      - ./postgre-data:/var/lib/postgresql/data
+    networks:
+      - hata-network 
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 30s
       timeout: 30s
       retries: 3
       start_period: 10s
 
-  # Redis 缓存服务
-  app-redis:
+  hata-redis:
     container_name: ${CONTAINER_PREFIX}-redis
-    image: redis:7-alpine
-    build:
-      context: .
-      dockerfile: redis-dockerfile
+    # 1. 放弃自定义构建（删除 build 块），改用 7.2 稳定版镜像
+    image: redis:7.2-alpine
     ports:
-      - "${REDIS_PORT}:6379"
+      - "${REDIS_PORT}:8761"
     volumes:
-      - redis_data:/data
-      - ./conf/redis.conf:/usr/local/etc/redis/redis.conf
-    command: redis-server /usr/local/etc/redis/redis.conf
+      # 2. 保留你原有的配置文件挂载（用精简后的 redis.conf）
+      - ./conf/redis.conf:/home/hata/redis/redis.conf
+      - ./redis/data:/data
+    # 3. 启动命令不变，仍加载你的配置文件
+    command: redis-server /home/hata/redis/redis.conf
+    networks:
+      - hata-network
+
+  hata-server:
+    container_name: ${CONTAINER_PREFIX}-server
     environment:
       <<: *shared-env
-    networks:
-      - app-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 30s
-      retries: 3
-      start_period: 10s
-
-  # FastAPI 应用服务
-  app-server:
-    container_name: ${CONTAINER_PREFIX}-server
-    build:
-      context: .
-      dockerfile: fastapi-dockerfile
+      # 数据库配置（覆盖 .env.docker 中的配置）
+      DB_HOST: hata-postgresql
+      DB_PORT: 5432
+      DB_USERNAME: ${POSTGRESQL_ROOT_NAME}
+      DB_PASSWORD: ${POSTGRESQL_ROOT_PASSWORD}
+      DB_DATABASE: "hata-service-platform"
+      # Redis 配置（覆盖 .env.docker 中的配置）
+      REDIS_HOST: hata-redis
+      REDIS_PORT: 8761  
+      REDIS_USERNAME: ""
+      REDIS_PASSWORD: "gemr20241105test"
+      REDIS_DATABASE: 2
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    image: hata-server:latest
     ports:
       - "${SERVER_PORT}:9099"
     volumes:
-      - ./ruoyi-fastapi-backend:/app
-      - app_logs:/app/logs
-      - app_uploads:/app/uploads
-      - ./ruoyi-fastapi-backend/sql:/app/sql
-    environment:
-      <<: *shared-env
-      APP_ENV: ${APP_ENV}
-      # 数据库配置（覆盖 .env.docker 中的配置）
-      DB_HOST: app-postgres
-      DB_PORT: 5432
-      DB_USERNAME: ${POSTGRES_USER}
-      DB_PASSWORD: ${POSTGRES_PASSWORD}
-      DB_DATABASE: ${POSTGRES_DB}
-      # Redis 配置（覆盖 .env.docker 中的配置）
-      REDIS_HOST: app-redis
-      REDIS_PORT: 6379
-      REDIS_USERNAME: ""
-      REDIS_PASSWORD: ""
-      REDIS_DATABASE: 2
+      - ./hata/logs:/home/hata/logs
+      - ./hata/uploadPath:/home/hata/uploadPath
     depends_on:
-      app-postgres:
-        condition: service_healthy
-      app-redis:
-        condition: service_healthy
+      - hata-postgresql
+      - hata-redis
     networks:
-      - app-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9099/docs"]
-      interval: 30s
-      timeout: 30s
-      retries: 3
-      start_period: 20s
-
-  # Nginx 反向代理服务
-  app-nginx:
+      - hata-network
+  
+  hata-nginx:
     container_name: ${CONTAINER_PREFIX}-nginx
-    image: nginx:alpine
+    # image: nginx
     environment:
       <<: *shared-env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    build:
+      context: .
+      dockerfile: nginx-dockerfile
     ports:
-      - "${NGINX_HTTP_PORT}:8077"
-      - "${NGINX_HTTPS_PORT}:443"
+      - "${NGINX_PORT_1}:8087"
+      - "${NGINX_PORT_2}:8085"
     volumes:
-      - ./docker/nginx/conf.d:/etc/nginx/conf.d
-      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./docker/nginx/ssl:/etc/nginx/ssl
-      - nginx_logs:/var/log/nginx
-      - app_uploads:/app/uploads
-      - ./ruoyi-fastapi-frontend/dist:/app/frontend
+      # 方便nginx能访问所有页面资源
+      - ./nginx-html:/etc/nginx/html
+      - ./dataset:/etc/nginx/dataset
+      - ./static_files:/etc/nginx/static_files
+      - ./html/dist:/home/hata/projects/hata-ui
+      - ./conf/nginx.conf:/etc/nginx/nginx.conf
+      - ./conf/ssl/ssl.key:/etc/nginx/private.key
+      - ./conf/ssl/ssl.cer:/etc/nginx/self-sign.cer
+      - ./nginx/logs:/var/log/nginx
+      - ./nginx/conf.d:/etc/nginx/conf.d
     depends_on:
-      app-server:
-        condition: service_healthy
+      - hata-server
     networks:
-      - app-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
-      interval: 30s
-      timeout: 30s
-      retries: 3
-      start_period: 10s
-
-# 定义数据卷
-volumes:
-  postgres_data:
-    name: ${CONTAINER_PREFIX}-postgres-data
-  redis_data:
-    name: ${CONTAINER_PREFIX}-redis-data
-  app_logs:
-    name: ${CONTAINER_PREFIX}-app-logs
-  app_uploads:
-    name: ${CONTAINER_PREFIX}-app-uploads
-  nginx_logs:
-    name: ${CONTAINER_PREFIX}-nginx-logs
+      - hata-network
