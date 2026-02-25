@@ -3,6 +3,9 @@ from config.database import async_engine, AsyncSessionLocal, Base
 # 导入日志工具
 from utils.log_util import logger
 
+# 导入所有DO模型以确保自动建表生效
+import module_todo.entity.do  # noqa: F401
+
 
 async def get_db():
     """
