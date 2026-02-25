@@ -3,7 +3,6 @@ from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 from pydantic_validation_decorator import NotBlank, Size, Xss
 from typing import Optional
-from module_todo.annotation.pydantic_annotation import as_query
 
 
 class NoteCategoryModel(BaseModel):
@@ -32,16 +31,14 @@ class NoteCategoryModel(BaseModel):
         self.get_category_name()
 
 
-class NoteCategoryQueryModel(NoteCategoryModel):
-    """
-    记事分类管理不分页查询模型
-    """
-
-
-@as_query
-class NoteCategoryPageQueryModel(NoteCategoryQueryModel):
+class NoteCategoryPageQueryModel(BaseModel):
     """
     记事分类管理分页查询模型
     """
+    model_config = ConfigDict(alias_generator=to_camel, from_attributes=True)
+
+    category_id: Optional[int] = Field(default=None, description='分类ID')
+    category_name: Optional[str] = Field(default=None, description='分类名称')
+    user_id: Optional[int] = Field(default=None, description='用户ID')
     page_num: int = Field(default=1, description='当前页码')
     page_size: int = Field(default=10, description='每页记录数')

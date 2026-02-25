@@ -6,6 +6,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic_validation_decorator import ValidateFields
+from typing import Optional
 
 from config.enums import BusinessType
 from config.get_db import get_db
@@ -27,15 +28,32 @@ noteController = APIRouter(prefix='/todo/note', dependencies=[Depends(LoginServi
     '/list', response_model=PageResponseModel, dependencies=[Depends(CheckUserInterfaceAuth('todo:note:list'))]
 )
 async def get_note_list(
-    request: Request,
-    note_page_query: NotePageQueryModel = Depends(NotePageQueryModel.as_query),
+    note_title: Optional[str] = None,
+    status: Optional[str] = None,
+    category_id: Optional[int] = None,
+    begin_time: Optional[str] = None,
+    end_time: Optional[str] = None,
+    page_num: int = 1,
+    page_size: int = 10,
     query_db: AsyncSession = Depends(get_db),
+    current_user: CurrentUserModel = Depends(LoginService.get_current_user),
 ):
     """
     获取记事列表（分页）
     """
+    # 构造查询对象
+    from module_todo.entity.vo.note_vo import NotePageQueryModel
+    note_page_query = NotePageQueryModel(
+        note_title=note_title,
+        status=status,
+        category_id=category_id,
+        begin_time=begin_time,
+        end_time=end_time,
+        page_num=page_num,
+        page_size=page_size,
+    )
+
     # 设置当前用户ID过滤
-    current_user: CurrentUserModel = await LoginService.get_current_user(request)
     note_page_query.user_id = current_user.user.user_id
 
     note_page_query_result = await NoteService.get_note_list_services(query_db, note_page_query, is_page=True)
@@ -47,7 +65,7 @@ async def get_note_list(
 @noteController.get(
     '/{note_id}', response_model=NoteModel, dependencies=[Depends(CheckUserInterfaceAuth('todo:note:query'))]
 )
-async def query_note_detail(request: Request, note_id: int, query_db: AsyncSession = Depends(get_db)):
+async def query_note_detail(note_id: int, query_db: AsyncSession = Depends(get_db)):
     """
     获取记事详细信息
     """
@@ -102,7 +120,7 @@ async def edit_note(
 
 @noteController.delete('/{note_ids}', dependencies=[Depends(CheckUserInterfaceAuth('todo:note:remove'))])
 @Log(title='记事管理', business_type=BusinessType.DELETE)
-async def delete_note(request: Request, note_ids: str, query_db: AsyncSession = Depends(get_db)):
+async def delete_note(note_ids: str, query_db: AsyncSession = Depends(get_db)):
     """
     删除记事
     """

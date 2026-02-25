@@ -6,6 +6,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic_validation_decorator import ValidateFields
+from typing import Optional
 
 from config.enums import BusinessType
 from config.get_db import get_db
@@ -27,15 +28,35 @@ taskController = APIRouter(prefix='/todo/task', dependencies=[Depends(LoginServi
     '/list', response_model=PageResponseModel, dependencies=[Depends(CheckUserInterfaceAuth('todo:task:list'))]
 )
 async def get_task_list(
-    request: Request,
-    task_page_query: TaskPageQueryModel = Depends(TaskPageQueryModel.as_query),
+    task_title: Optional[str] = None,
+    task_type: Optional[str] = None,
+    status: Optional[str] = None,
+    priority: Optional[str] = None,
+    category_id: Optional[int] = None,
+    begin_time: Optional[str] = None,
+    end_time: Optional[str] = None,
+    page_num: int = 1,
+    page_size: int = 10,
     query_db: AsyncSession = Depends(get_db),
+    current_user: CurrentUserModel = Depends(LoginService.get_current_user),
 ):
     """
     获取任务列表（分页）
     """
+    from module_todo.entity.vo.task_vo import TaskPageQueryModel
+    task_page_query = TaskPageQueryModel(
+        task_title=task_title,
+        task_type=task_type,
+        status=status,
+        priority=priority,
+        category_id=category_id,
+        begin_time=begin_time,
+        end_time=end_time,
+        page_num=page_num,
+        page_size=page_size,
+    )
+
     # 设置当前用户ID过滤
-    current_user: CurrentUserModel = await LoginService.get_current_user(request)
     task_page_query.user_id = current_user.user.user_id
 
     task_page_query_result = await TaskService.get_task_list_services(query_db, task_page_query, is_page=True)
@@ -48,17 +69,35 @@ async def get_task_list(
     '/todo', response_model=PageResponseModel, dependencies=[Depends(CheckUserInterfaceAuth('todo:task:list'))]
 )
 async def get_todo_list(
-    request: Request,
-    task_page_query: TaskPageQueryModel = Depends(TaskPageQueryModel.as_query),
+    task_title: Optional[str] = None,
+    status: Optional[str] = None,
+    priority: Optional[str] = None,
+    category_id: Optional[int] = None,
+    begin_time: Optional[str] = None,
+    end_time: Optional[str] = None,
+    page_num: int = 1,
+    page_size: int = 10,
     query_db: AsyncSession = Depends(get_db),
+    current_user: CurrentUserModel = Depends(LoginService.get_current_user),
 ):
     """
     获取Todo列表（Task的快捷入口，task_type=2）
     """
-    # 设置当前用户ID过滤和类型过滤
-    current_user: CurrentUserModel = await LoginService.get_current_user(request)
+    from module_todo.entity.vo.task_vo import TaskPageQueryModel
+    task_page_query = TaskPageQueryModel(
+        task_title=task_title,
+        task_type='2',  # Todo类型
+        status=status,
+        priority=priority,
+        category_id=category_id,
+        begin_time=begin_time,
+        end_time=end_time,
+        page_num=page_num,
+        page_size=page_size,
+    )
+
+    # 设置当前用户ID过滤
     task_page_query.user_id = current_user.user.user_id
-    task_page_query.task_type = '2'  # Todo类型
 
     task_page_query_result = await TaskService.get_task_list_services(query_db, task_page_query, is_page=True)
     logger.info('获取成功')
@@ -69,7 +108,7 @@ async def get_todo_list(
 @taskController.get(
     '/{task_id}', response_model=TaskModel, dependencies=[Depends(CheckUserInterfaceAuth('todo:task:query'))]
 )
-async def query_task_detail(request: Request, task_id: int, query_db: AsyncSession = Depends(get_db)):
+async def query_task_detail(task_id: int, query_db: AsyncSession = Depends(get_db)):
     """
     获取任务详细信息
     """
@@ -124,7 +163,7 @@ async def edit_task(
 
 @taskController.delete('/{task_ids}', dependencies=[Depends(CheckUserInterfaceAuth('todo:task:remove'))])
 @Log(title='任务管理', business_type=BusinessType.DELETE)
-async def delete_task(request: Request, task_ids: str, query_db: AsyncSession = Depends(get_db)):
+async def delete_task(task_ids: str, query_db: AsyncSession = Depends(get_db)):
     """
     删除任务
     """
@@ -137,7 +176,7 @@ async def delete_task(request: Request, task_ids: str, query_db: AsyncSession = 
 
 @taskController.patch('/{task_id}/complete', dependencies=[Depends(CheckUserInterfaceAuth('todo:task:edit'))])
 @Log(title='任务管理', business_type=BusinessType.UPDATE)
-async def complete_task(request: Request, task_id: int, query_db: AsyncSession = Depends(get_db)):
+async def complete_task(task_id: int, query_db: AsyncSession = Depends(get_db)):
     """
     完成任务
     """
@@ -149,7 +188,7 @@ async def complete_task(request: Request, task_id: int, query_db: AsyncSession =
 
 @taskController.patch('/{task_id}/reopen', dependencies=[Depends(CheckUserInterfaceAuth('todo:task:edit'))])
 @Log(title='任务管理', business_type=BusinessType.UPDATE)
-async def reopen_task(request: Request, task_id: int, query_db: AsyncSession = Depends(get_db)):
+async def reopen_task(task_id: int, query_db: AsyncSession = Depends(get_db)):
     """
     重开任务
     """

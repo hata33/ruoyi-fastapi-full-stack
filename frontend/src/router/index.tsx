@@ -20,6 +20,9 @@ const LoginLog = lazy(() => import("@/pages/system/log/logininfor.tsx"));
 const ToolGen = lazy(() => import("@/pages/tool/gen.tsx"));
 const Userinfo  = lazy(() => import('@/pages/userinfo.tsx'))
 const DeepSeek = lazy(() => import('@/pages/deepseek/deepseek.tsx'))
+const TodoNote = lazy(() => import('@/pages/todo/note.tsx'))
+const TodoTask = lazy(() => import('@/pages/todo/task.tsx'))
+const TodoCategory = lazy(() => import('@/pages/todo/category.tsx'))
 
 const Router: FC = () => {
   const location = useLocation();
@@ -90,6 +93,18 @@ const Router: FC = () => {
           {
             path: 'deepseek',
             element: <DeepSeek/>
+          },
+          {
+            path: 'todo/note',
+            element: <TodoNote/>
+          },
+          {
+            path: 'todo/task',
+            element: <TodoTask/>
+          },
+          {
+            path: 'todo/category',
+            element: <TodoCategory/>
           }
         ],
       },

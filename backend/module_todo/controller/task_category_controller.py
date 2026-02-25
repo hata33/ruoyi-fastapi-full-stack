@@ -6,6 +6,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic_validation_decorator import ValidateFields
+from typing import Optional
 
 from config.enums import BusinessType
 from config.get_db import get_db
@@ -27,15 +28,23 @@ taskCategoryController = APIRouter(prefix='/todo/task/category', dependencies=[D
     '/list', response_model=PageResponseModel, dependencies=[Depends(CheckUserInterfaceAuth('todo:task:category:list'))]
 )
 async def get_category_list(
-    request: Request,
-    category_page_query: TaskCategoryPageQueryModel = Depends(TaskCategoryPageQueryModel.as_query),
+    category_name: Optional[str] = None,
+    page_num: int = 1,
+    page_size: int = 10,
     query_db: AsyncSession = Depends(get_db),
+    current_user: CurrentUserModel = Depends(LoginService.get_current_user),
 ):
     """
     获取分类列表（分页）
     """
+    from module_todo.entity.vo.task_category_vo import TaskCategoryPageQueryModel
+    category_page_query = TaskCategoryPageQueryModel(
+        category_name=category_name,
+        page_num=page_num,
+        page_size=page_size,
+    )
+
     # 设置当前用户ID过滤
-    current_user: CurrentUserModel = await LoginService.get_current_user(request)
     category_page_query.user_id = current_user.user.user_id
 
     category_page_query_result = await TaskCategoryService.get_category_list_services(query_db, category_page_query, is_page=True)
@@ -89,7 +98,7 @@ async def edit_category(
 
 @taskCategoryController.delete('/{category_id}', dependencies=[Depends(CheckUserInterfaceAuth('todo:task:category:remove'))])
 @Log(title='任务分类', business_type=BusinessType.DELETE)
-async def delete_category(request: Request, category_id: int, query_db: AsyncSession = Depends(get_db)):
+async def delete_category(category_id: int, query_db: AsyncSession = Depends(get_db)):
     """
     删除分类
     """

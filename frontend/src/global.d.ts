@@ -165,3 +165,56 @@ interface FieldInfo {
   htmlType: string
   dictType: string
 }
+
+// Todo 模块类型定义
+interface BizNote {
+  noteId: number
+  noteTitle: string
+  noteContent: string
+  categoryId: number
+  userId: number
+  status: string
+  createBy: string
+  createTime: string
+  updateTime: string
+  remark: string
+}
+
+interface BizNoteCategory {
+  categoryId: number
+  categoryName: string
+  userId: number
+  sortOrder: number
+  createBy: string
+  createTime: string
+  updateTime: string
+  remark: string
+}
+
+interface BizTask {
+  taskId: number
+  taskTitle: string
+  taskContent: string
+  categoryId: number
+  userId: number
+  taskType: string  // 1=任务 2=Todo
+  status: string    // 0=待办 1=已完成
+  priority: string  // 0=低 1=中 2=高
+  dueDate: string
+  completedAt: string
+  createBy: string
+  createTime: string
+  updateTime: string
+  remark: string
+}
+
+interface BizTaskCategory {
+  categoryId: number
+  categoryName: string
+  userId: number
+  sortOrder: number
+  createBy: string
+  createTime: string
+  updateTime: string
+  remark: string
+}

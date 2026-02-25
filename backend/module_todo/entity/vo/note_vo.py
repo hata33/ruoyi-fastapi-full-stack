@@ -3,7 +3,6 @@ from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 from pydantic_validation_decorator import NotBlank, Size, Xss
 from typing import Literal, Optional
-from module_todo.annotation.pydantic_annotation import as_query
 
 
 class NoteModel(BaseModel):
@@ -34,19 +33,30 @@ class NoteModel(BaseModel):
         self.get_note_title()
 
 
-class NoteQueryModel(NoteModel):
+class NoteQueryModel(BaseModel):
     """
     记事管理不分页查询模型
     """
+    model_config = ConfigDict(alias_generator=to_camel, from_attributes=True)
+
+    note_id: Optional[int] = Field(default=None, description='记事ID')
+    note_title: Optional[str] = Field(default=None, description='记事标题')
+    note_content: Optional[str] = Field(default=None, description='记事内容')
+    category_id: Optional[int] = Field(default=None, description='分类ID')
+    user_id: Optional[int] = Field(default=None, description='用户ID')
+    status: Optional[Literal['0', '1']] = Field(default=None, description='状态（0正常 1关闭）')
+    create_by: Optional[str] = Field(default=None, description='创建者')
+    remark: Optional[str] = Field(default=None, description='备注')
     begin_time: Optional[str] = Field(default=None, description='开始时间')
     end_time: Optional[str] = Field(default=None, description='结束时间')
 
 
-@as_query
 class NotePageQueryModel(NoteQueryModel):
     """
     记事管理分页查询模型
     """
+    model_config = ConfigDict(alias_generator=to_camel, from_attributes=True)
+
     page_num: int = Field(default=1, description='当前页码')
     page_size: int = Field(default=10, description='每页记录数')
 
