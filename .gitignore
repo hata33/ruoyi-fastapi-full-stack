@@ -187,3 +187,5 @@ cython_debug/
 .vscode/
 
 frontend/node_modules/*
+# 部署配置（包含敏感信息）
+.deploy.env
