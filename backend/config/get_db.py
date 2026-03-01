@@ -3,8 +3,16 @@ from config.database import async_engine, AsyncSessionLocal, Base
 # 导入日志工具
 from utils.log_util import logger
 
-# 导入所有DO模型以确保自动建表生效
-import module_todo.entity.do  # noqa: F401
+# 导入所有DO模型以确保自动建表生效（必须显式导入每个模型文件）
+# module_todo 模型
+import module_todo.entity.do.note_do  # noqa: F401
+import module_todo.entity.do.note_category_do  # noqa: F401
+import module_todo.entity.do.task_do  # noqa: F401
+import module_todo.entity.do.task_category_do  # noqa: F401
+# module_task 模型
+import module_task.entity.do.daily_task_do  # noqa: F401
+import module_task.entity.do.daily_task_category_do  # noqa: F401
+import module_task.entity.do.daily_task_log_do  # noqa: F401
 
 
 async def get_db():

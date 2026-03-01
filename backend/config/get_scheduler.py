@@ -19,8 +19,8 @@ from config.env import DataBaseConfig, RedisConfig
 from module_admin.dao.job_dao import JobDao
 from module_admin.entity.vo.job_vo import JobLogModel, JobModel
 from module_admin.service.job_log_service import JobLogService
+from module_task.scheduler.daily_refresh_scheduler import register_daily_refresh_scheduler
 from utils.log_util import logger
-import module_task  # noqa: F401
 
 
 # 重写Cron定时触发器，扩展标准CronTrigger的功能
@@ -232,7 +232,11 @@ class SchedulerUtil:
         # 添加事件监听器，监听所有调度器事件
         # EVENT_ALL表示监听所有类型的事件，包括任务开始、完成、异常等
         scheduler.add_listener(cls.scheduler_event_listener, EVENT_ALL)
-        
+
+        # 注册每日任务刷新调度器
+        # 每日 00:00 自动刷新已完成的每日任务
+        register_daily_refresh_scheduler()
+
         # 记录初始化完成日志
         logger.info('系统初始定时任务加载成功')
 

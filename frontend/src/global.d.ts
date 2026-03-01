@@ -218,3 +218,39 @@ interface BizTaskCategory {
   updateTime: string
   remark: string
 }
+
+// 每日任务模块类型定义
+interface DailyTask {
+  taskId: number
+  title: string
+  description: string
+  taskType: 'daily' | 'once' | 'long'
+  status: 'pending' | 'completed' | 'disabled'
+  isPinned: boolean
+  sortOrder: number
+  completionCount: number
+  iconType: string
+  userId: number
+  categoryId: number
+  lastCompletedAt: string
+  disabledAt: string
+  createBy: string
+  createTime: string
+  updateBy: string
+  updateTime: string
+  remark: string
+  categoryName?: string
+}
+
+interface DailyTaskCategory {
+  categoryId: number
+  categoryName: string
+  categoryIcon: string
+  sortOrder: number
+  userId: number
+  createBy: string
+  createTime: string
+  updateBy: string
+  updateTime: string
+  remark: string
+}

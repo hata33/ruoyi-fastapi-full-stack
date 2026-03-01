@@ -17,7 +17,12 @@
       "Bash(npx tailwindcss init:*)",
       "Bash(pnpm exec tailwindcss:*)",
       "Bash(pnpm remove:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(tree:*)",
+      "Bash(dir:*)",
+      "Bash(if not exist docs mkdir docs)",
+      "Bash(del:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

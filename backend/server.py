@@ -101,6 +101,9 @@ from module_todo.controller.note_controller import noteController
 from module_todo.controller.note_category_controller import noteCategoryController
 from module_todo.controller.task_controller import taskController
 from module_todo.controller.task_category_controller import taskCategoryController
+# 导入每日任务管理模块控制器
+from module_task.controller.daily_task_controller import dailyTaskController
+from module_task.controller.daily_task_category_controller import dailyTaskCategoryController
 # 导入子应用处理函数
 from sub_applications.handle import handle_sub_applications
 # 导入通用工具函数
@@ -189,6 +192,10 @@ controller_list = [
     {'router': noteCategoryController, 'tags': ['Todo-记事分类']},  # 记事分类API
     {'router': taskController, 'tags': ['Todo-任务管理']},  # 任务管理API
     {'router': taskCategoryController, 'tags': ['Todo-任务分类']},  # 任务分类API
+
+    # 每日任务管理模块
+    {'router': dailyTaskController, 'tags': ['每日任务-任务管理']},  # 每日任务管理API
+    {'router': dailyTaskCategoryController, 'tags': ['每日任务-分类管理']},  # 每日任务分类API
 ]
 
 # 遍历控制器列表，将每个控制器注册到FastAPI应用
