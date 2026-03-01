@@ -23,6 +23,8 @@ const DeepSeek = lazy(() => import('@/pages/deepseek/deepseek.tsx'))
 const TodoNote = lazy(() => import('@/pages/todo/note.tsx'))
 const TodoTask = lazy(() => import('@/pages/todo/task.tsx'))
 const TodoCategory = lazy(() => import('@/pages/todo/category.tsx'))
+const DailyTask = lazy(() => import('@/pages/todo/daily-task.tsx'))
+const DailyTaskCategory = lazy(() => import('@/pages/todo/daily-task-category.tsx'))
 
 const Router: FC = () => {
   const location = useLocation();
@@ -105,6 +107,14 @@ const Router: FC = () => {
           {
             path: 'todo/category',
             element: <TodoCategory/>
+          },
+          {
+            path: 'daily-task',
+            element: <DailyTask/>
+          },
+          {
+            path: 'daily-task-category',
+            element: <DailyTaskCategory/>
           }
         ],
       },

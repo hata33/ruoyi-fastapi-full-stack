@@ -39,14 +39,14 @@ dailyTaskController = APIRouter(
 )
 async def get_daily_task_list(
     title: Optional[str] = None,
-    task_type: Optional[str] = None,
+    taskType: Optional[str] = None,
     status: Optional[str] = None,
-    is_pinned: Optional[bool] = None,
-    category_id: Optional[int] = None,
-    begin_time: Optional[str] = None,
-    end_time: Optional[str] = None,
-    page_num: int = 1,
-    page_size: int = 10,
+    isPinned: Optional[bool] = None,
+    categoryId: Optional[int] = None,
+    beginTime: Optional[str] = None,
+    endTime: Optional[str] = None,
+    pageNum: int = 1,
+    pageSize: int = 10,
     query_db: AsyncSession = Depends(get_db),
     current_user: CurrentUserModel = Depends(LoginService.get_current_user),
 ):
@@ -56,14 +56,14 @@ async def get_daily_task_list(
     from module_task.entity.vo.daily_task_vo import DailyTaskPageQueryModel
     task_page_query = DailyTaskPageQueryModel(
         title=title,
-        task_type=task_type,
+        task_type=taskType,
         status=status,
-        is_pinned=is_pinned,
-        category_id=category_id,
-        begin_time=begin_time,
-        end_time=end_time,
-        page_num=page_num,
-        page_size=page_size,
+        is_pinned=isPinned,
+        category_id=categoryId,
+        begin_time=beginTime,
+        end_time=endTime,
+        page_num=pageNum,
+        page_size=pageSize,
     )
 
     # 设置当前用户ID过滤
@@ -139,7 +139,11 @@ async def edit_daily_task(
     '/{task_ids}', dependencies=[Depends(CheckUserInterfaceAuth('daily:task:remove'))]
 )
 @Log(title='每日任务管理', business_type=BusinessType.DELETE)
-async def delete_daily_task(task_ids: str, query_db: AsyncSession = Depends(get_db)):
+async def delete_daily_task(
+    request: Request,
+    task_ids: str,
+    query_db: AsyncSession = Depends(get_db)
+):
     """
     删除每日任务
     """
@@ -155,7 +159,9 @@ async def delete_daily_task(task_ids: str, query_db: AsyncSession = Depends(get_
 )
 @Log(title='每日任务管理', business_type=BusinessType.UPDATE)
 async def complete_daily_task(
-    task_id: int, query_db: AsyncSession = Depends(get_db)
+    request: Request,
+    task_id: int,
+    query_db: AsyncSession = Depends(get_db)
 ):
     """
     完成每日任务
@@ -172,7 +178,11 @@ async def complete_daily_task(
     '/{task_id}/reopen', dependencies=[Depends(CheckUserInterfaceAuth('daily:task:edit'))]
 )
 @Log(title='每日任务管理', business_type=BusinessType.UPDATE)
-async def reopen_daily_task(task_id: int, query_db: AsyncSession = Depends(get_db)):
+async def reopen_daily_task(
+    request: Request,
+    task_id: int,
+    query_db: AsyncSession = Depends(get_db)
+):
     """
     重开每日任务
     """
@@ -189,7 +199,9 @@ async def reopen_daily_task(task_id: int, query_db: AsyncSession = Depends(get_d
 )
 @Log(title='每日任务管理', business_type=BusinessType.UPDATE)
 async def disable_daily_task(
-    task_id: int, query_db: AsyncSession = Depends(get_db)
+    request: Request,
+    task_id: int,
+    query_db: AsyncSession = Depends(get_db)
 ):
     """
     禁用每日任务
@@ -206,7 +218,11 @@ async def disable_daily_task(
     '/{task_id}/enable', dependencies=[Depends(CheckUserInterfaceAuth('daily:task:edit'))]
 )
 @Log(title='每日任务管理', business_type=BusinessType.UPDATE)
-async def enable_daily_task(task_id: int, query_db: AsyncSession = Depends(get_db)):
+async def enable_daily_task(
+    request: Request,
+    task_id: int,
+    query_db: AsyncSession = Depends(get_db)
+):
     """
     启用每日任务
     """

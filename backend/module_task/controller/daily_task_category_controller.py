@@ -118,7 +118,11 @@ async def edit_category(
     '/{category_ids}', dependencies=[Depends(CheckUserInterfaceAuth('daily:category:remove'))]
 )
 @Log(title='每日任务分类', business_type=BusinessType.DELETE)
-async def delete_category(category_ids: str, query_db: AsyncSession = Depends(get_db)):
+async def delete_category(
+    request: Request,
+    category_ids: str,
+    query_db: AsyncSession = Depends(get_db)
+):
     """
     删除每日任务分类
     """

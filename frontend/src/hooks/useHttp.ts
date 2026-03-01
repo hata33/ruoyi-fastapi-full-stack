@@ -86,11 +86,21 @@ export function useHttp(defaultLoading = true) {
     [addTask, modal, message]
   );
 
+  const httpPatch = useCallback(
+    <T>(url: string, data?: any, toastError = true) => {
+      const task = request<T>({ url, data, toastError, method: "PATCH", modal, message });
+      addTask(task);
+      return task
+    },
+    [addTask, modal, message]
+  );
+
   return {
     httpGet,
     httpPost,
     httpPut,
     httpDelete,
+    httpPatch,
     loading,
   };
 }

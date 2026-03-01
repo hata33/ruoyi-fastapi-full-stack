@@ -34,6 +34,45 @@ class DailyTaskCategoryDao:
         return category_info
 
     @classmethod
+    async def get_category_detail_by_info(cls, db: AsyncSession, category_name: str, user_id: int):
+        """
+        根据分类名称和用户ID获取分类详细信息
+        用于校验分类名称唯一性
+
+        :param db: 异步数据库会话
+        :param category_name: 分类名称
+        :param user_id: 用户ID
+        :return: 分类详情对象
+        """
+        category_info = (
+            await db.execute(
+                select(DailyTaskCategoryDO).where(
+                    DailyTaskCategoryDO.category_name == category_name,
+                    DailyTaskCategoryDO.user_id == user_id
+                )
+            )
+        ).scalars().first()
+        return category_info
+
+    @classmethod
+    async def get_category_task_count(cls, db: AsyncSession, category_id: int) -> int:
+        """
+        获取分类下的任务数量
+        用于删除分类前的校验
+
+        :param db: 异步数据库会话
+        :param category_id: 分类ID
+        :return: 任务数量
+        """
+        from module_task.entity.do.daily_task_do import DailyTaskDO
+        result = await db.execute(
+            select(DailyTaskDO).where(
+                DailyTaskDO.category_id == category_id
+            )
+        )
+        return len(result.all())
+
+    @classmethod
     async def get_category_list(
         cls,
         db: AsyncSession,

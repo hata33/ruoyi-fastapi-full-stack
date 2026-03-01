@@ -55,6 +55,23 @@ const Slider: FC = () => {
         icon: <icons.HomeOutlined />,
         label: "首页",
       },
+      {
+        key: "/daily-task-menu",
+        icon: <icons.CheckSquareOutlined />,
+        label: "每日任务",
+        children: [
+          {
+            key: "/daily-task",
+            icon: <icons.CheckCircleOutlined />,
+            label: "任务管理",
+          },
+          {
+            key: "/daily-task-category",
+            icon: <icons.FolderOutlined />,
+            label: "分类管理",
+          },
+        ],
+      },
     ]);
   }, [routes]);
 
