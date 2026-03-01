@@ -2,6 +2,7 @@ import io
 import os
 import pandas as pd
 import re
+from datetime import datetime
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, PatternFill
 from openpyxl.utils import get_column_letter
@@ -62,8 +63,16 @@ class SqlalchemyUtil:
             for name, value in base_dict.items():
                 if isinstance(value, InstrumentedList):
                     base_dict[name] = cls.serialize_result(value, 'snake_to_camel')
+                # 格式化时间字段
+                elif isinstance(value, datetime):
+                    base_dict[name] = value.strftime('%Y-%m-%d %H:%M:%S')
         elif isinstance(obj, dict):
             base_dict = obj.copy()
+            # 格式化时间字段
+            for name, value in base_dict.items():
+                if isinstance(value, datetime):
+                    base_dict[name] = value.strftime('%Y-%m-%d %H:%M:%S')
+
         if transform_case == 'snake_to_camel':
             return {CamelCaseUtil.snake_to_camel(k): v for k, v in base_dict.items()}
         elif transform_case == 'camel_to_snake':

@@ -93,7 +93,7 @@ class DailyTaskService:
             task_id_list = page_object.task_ids.split(',')
             try:
                 for task_id in task_id_list:
-                    await DailyTaskDao.delete_task_dao(query_db, DailyTaskModel(taskId=int(task_id)))
+                    await DailyTaskDao.delete_task_dao(query_db, DailyTaskModel(task_id=int(task_id)))
                 await query_db.commit()
                 logger.info(f'删除每日任务成功, task_ids: {page_object.task_ids}')
                 return CrudResponseModel(is_success=True, message='删除成功')
@@ -121,8 +121,8 @@ class DailyTaskService:
         # 根据状态设置相关字段
         update_data = {'status': status}
         if status == 'completed':
-            update_data['lastCompletedAt'] = datetime.now()
-            update_data['completionCount'] = (task_info.completion_count or 0) + 1
+            update_data['last_completed_at'] = datetime.now()
+            update_data['completion_count'] = (task_info.completion_count or 0) + 1
         elif status == 'pending':
             # 重开时保留完成次数记录
             pass
@@ -154,7 +154,7 @@ class DailyTaskService:
         status = 'disabled' if disabled else 'pending'
         update_data = {
             'status': status,
-            'disabledAt': datetime.now() if disabled else None
+            'disabled_at': datetime.now() if disabled else None
         }
 
         try:

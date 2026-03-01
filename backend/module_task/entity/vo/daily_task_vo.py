@@ -10,7 +10,11 @@ class DailyTaskModel(BaseModel):
     """
     每日任务表对应pydantic模型
     """
-    model_config = ConfigDict(alias_generator=to_camel, from_attributes=True)
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        from_attributes=True,
+        populate_by_name=True
+    )
 
     task_id: Optional[int] = Field(default=None, description='任务ID')
     title: Optional[str] = Field(default=None, description='任务标题')

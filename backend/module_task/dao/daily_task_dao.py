@@ -110,7 +110,12 @@ class DailyTaskDao:
         :param db: 异步数据库会话
         :param task: 任务字典对象
         """
-        await db.execute(update(DailyTaskDO), [task])
+        await db.execute(
+            update(DailyTaskDO)
+            .where(DailyTaskDO.task_id == task.get('task_id'))
+            .values(**task)
+            .execution_options(synchronize_session=False)
+        )
 
     @classmethod
     async def delete_task_dao(cls, db: AsyncSession, task: DailyTaskModel):
@@ -130,10 +135,7 @@ class DailyTaskDao:
         cls,
         db: AsyncSession,
         task_id: int,
-        status: str,
-        completion_count: int = None,
-        last_completed_at: datetime = None,
-        disabled_at: datetime = None,
+        update_data: dict,
     ):
         """
         更新任务状态
@@ -141,23 +143,13 @@ class DailyTaskDao:
 
         :param db: 异步数据库会话
         :param task_id: 任务ID
-        :param status: 新状态
-        :param completion_count: 累计完成次数（可选）
-        :param last_completed_at: 最后完成时间（可选）
-        :param disabled_at: 禁用时间（可选）
+        :param update_data: 更新数据字典
         """
-        update_data = {'status': status}
-        if completion_count is not None:
-            update_data['completion_count'] = completion_count
-        if last_completed_at is not None:
-            update_data['last_completed_at'] = last_completed_at
-        if disabled_at is not None:
-            update_data['disabled_at'] = disabled_at
-        if status == 'pending':
-            # 重新打开任务时，清除禁用时间
-            update_data['disabled_at'] = None
         await db.execute(
-            update(DailyTaskDO).where(DailyTaskDO.task_id == task_id), [update_data]
+            update(DailyTaskDO)
+            .where(DailyTaskDO.task_id == task_id)
+            .values(**update_data)
+            .execution_options(synchronize_session=False)
         )
 
     @classmethod
@@ -170,9 +162,48 @@ class DailyTaskDao:
         :param is_pinned: 是否置顶
         """
         await db.execute(
-            update(DailyTaskDO).where(DailyTaskDO.task_id == task_id),
-            [{'task_id': task_id, 'is_pinned': is_pinned}],
+            update(DailyTaskDO)
+            .where(DailyTaskDO.task_id == task_id)
+            .values(is_pinned=is_pinned)
+            .execution_options(synchronize_session=False)
         )
+
+    @classmethod
+    async def update_task_sort_order_dao(cls, db: AsyncSession, task_id: int, sort_order: int):
+        """
+        更新单个任务的排序
+
+        :param db: 异步数据库会话
+        :param task_id: 任务ID
+        :param sort_order: 排序顺序
+        """
+        await db.execute(
+            update(DailyTaskDO)
+            .where(DailyTaskDO.task_id == task_id)
+            .values(sort_order=sort_order)
+            .execution_options(synchronize_session=False)
+        )
+
+    @classmethod
+    async def refresh_daily_tasks_dao(cls, db: AsyncSession) -> int:
+        """
+        刷新每日任务
+        将所有 daily 类型且状态为 completed 的任务重置为 pending
+        保留 completion_count 统计
+
+        :param db: 异步数据库会话
+        :return: 影响的行数
+        """
+        result = await db.execute(
+            update(DailyTaskDO)
+            .where(
+                DailyTaskDO.task_type == 'daily',
+                DailyTaskDO.status == 'completed',
+            )
+            .values(status='pending')
+            .execution_options(synchronize_session=False)
+        )
+        return result.rowcount
 
     @classmethod
     async def batch_update_sort_order_dao(cls, db: AsyncSession, tasks: list[dict]):
@@ -184,7 +215,16 @@ class DailyTaskDao:
         :param tasks: 任务列表，包含task_id和sort_order
         """
         if tasks:
-            await db.execute(update(DailyTaskDO), tasks)
+            for task in tasks:
+                task_id = task.get('task_id')
+                sort_order = task.get('sort_order')
+                if task_id is not None and sort_order is not None:
+                    await db.execute(
+                        update(DailyTaskDO)
+                        .where(DailyTaskDO.task_id == task_id)
+                        .values(sort_order=sort_order)
+                        .execution_options(synchronize_session=False)
+                    )
 
     @classmethod
     async def get_max_sort_order(cls, db: AsyncSession, user_id: int) -> int:

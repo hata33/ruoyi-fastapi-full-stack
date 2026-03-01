@@ -267,7 +267,7 @@ async def pin_daily_task(
     """
     置顶/取消置顶每日任务
     """
-    pin_result = await DailyTaskService.pin_task_services(query_db, task_id, pin_data.is_pinned)
+    pin_result = await DailyTaskService.toggle_pin_services(query_db, task_id, pin_data)
     logger.info(pin_result.message)
 
     return ResponseUtil.success(msg=pin_result.message)

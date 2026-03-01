@@ -1,5 +1,5 @@
 import {FC, useEffect, useState} from "react";
-import {Button, Form, Input, Table, TableColumnsType} from "antd";
+import {Button, Form, Input, Table, TableColumnsType, Space} from "antd";
 import {useContentHeight} from "@/hooks/useContentHeight.ts";
 import {useAction} from "@/hooks/useAction.ts";
 import TableNav from "@/components/TableNav/TableNav.tsx";
@@ -35,65 +35,57 @@ const DailyTaskCategoryPage: FC = () => {
     {
       dataIndex: 'categoryId',
       title: 'ID',
-      width: 80,
-      className: 'text-gray-500 font-mono text-sm',
+      width: 60,
+      className: 'text-gray-400 font-mono text-xs',
     },
     {
       dataIndex: 'categoryName',
       title: '分类名称',
       render: (name: string) => (
         <div className="flex items-center gap-2">
-          <span className="p-2 bg-blue-100 rounded-lg">
-            <FolderOutlined className="text-blue-500" />
-          </span>
-          <span className="font-medium text-gray-700">{name}</span>
+          <FolderOutlined className="text-gray-400 text-xs" />
+          <span className="text-sm">{name}</span>
         </div>
       ),
     },
     {
       dataIndex: 'categoryIcon',
       title: '图标',
-      width: 120,
+      width: 100,
       render: (icon: string) => (
-        <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-md text-sm text-gray-600">
-          {icon || '-'}
-        </span>
+        <span className="text-xs text-gray-500">{icon || '-'}</span>
       ),
     },
     {
       dataIndex: 'sortOrder',
       title: '排序',
-      width: 100,
+      width: 80,
       render: (order: number) => (
-        <span className="inline-flex items-center justify-center w-8 h-8 bg-primary-100 text-primary-700 rounded-full font-medium text-sm">
-          {order}
-        </span>
+        <span className="text-xs text-gray-500">{order}</span>
       ),
     },
     {
       dataIndex: 'createTime',
       title: '创建时间',
-      width: 180,
+      width: 160,
       render: (time: string) => (
-        <span className="text-gray-500 text-sm">{time}</span>
+        <span className="text-xs text-gray-400">{time}</span>
       ),
     },
     {
       title: "操作",
       key: "operation",
       fixed: "right",
-      width: 150,
+      width: 120,
       render: (_, record) => {
         return (
-          <div className="flex gap-2">
+          <Space size={4}>
             <PermissionWrap perm="daily:category:edit">
               <Button
                 size="small"
                 type="link"
                 onClick={() => edit(record)}
-                className="text-primary-600 hover:text-primary-700"
               >
-                <EditOutlined className="text-xs mr-1" />
                 编辑
               </Button>
             </PermissionWrap>
@@ -103,26 +95,21 @@ const DailyTaskCategoryPage: FC = () => {
                 type="link"
                 danger
                 onClick={() => remove([record.categoryId])}
-                className="text-red-500 hover:text-red-600"
               >
-                <DeleteOutlined className="text-xs mr-1" />
                 删除
               </Button>
             </PermissionWrap>
-          </div>
+          </Space>
         );
       },
     },
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-      <div className="bg-white rounded-xl shadow-soft p-6">
+    <div className="p-4">
+      <div>
         <TableNav
-          title={<span className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-            <FolderOutlined className="text-blue-500" />
-            每日任务分类
-          </span>}
+          title="每日任务分类"
           add={() => add({ sortOrder: 0, categoryIcon: 'folder' })}
           addPermission="daily:category:add"
         />
@@ -133,8 +120,8 @@ const DailyTaskCategoryPage: FC = () => {
           pagination={false}
           dataSource={categories}
           columns={columns}
-          size="middle"
-          className="mt-4"
+          size="small"
+          className="mt-3"
         />
       </div>
 
@@ -147,17 +134,13 @@ const DailyTaskCategoryPage: FC = () => {
 
 function CategoryForm() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <Form.Item
         label="分类名称"
         name="categoryName"
         rules={[{ required: true, message: '请输入分类名称' }]}
       >
-        <Input
-          placeholder="请输入分类名称"
-          prefix={<FolderOutlined className="text-gray-400" />}
-          className="rounded-lg"
-        />
+        <Input placeholder="请输入分类名称" />
       </Form.Item>
 
       <Form.Item
@@ -165,10 +148,7 @@ function CategoryForm() {
         name="categoryIcon"
         rules={[{ required: true, message: '请输入图标' }]}
       >
-        <Input
-          placeholder="请输入图标（如：folder、star、calendar等）"
-          className="rounded-lg"
-        />
+        <Input placeholder="图标（如：folder、star等）" />
       </Form.Item>
 
       <Form.Item
@@ -179,15 +159,13 @@ function CategoryForm() {
         <Input
           type="number"
           placeholder="数值越小越靠前"
-          className="rounded-lg"
         />
       </Form.Item>
 
       <Form.Item label="备注" name="remark">
         <Input.TextArea
           placeholder="请输入备注"
-          rows={3}
-          className="rounded-lg"
+          rows={2}
         />
       </Form.Item>
     </div>
