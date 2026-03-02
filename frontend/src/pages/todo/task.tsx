@@ -165,7 +165,7 @@ const TodoTaskPage: FC = () => {
 
       <div className="table-wrapper">
         <TableNav title="任务列表" add={() => add({ taskType: '2', status: '0', priority: '1' })} addPermission="todo:task:add">
-          <Button type="primary" size="small" onClick={() => form.setFieldsValue({ taskType: '2' }) && filter()}>只看Todo</Button>
+          <Button type="primary" size="small" onClick={() => { form.setFieldsValue({ taskType: '2' }); filter(); }}>只看Todo</Button>
         </TableNav>
 
         <Table

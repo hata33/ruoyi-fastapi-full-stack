@@ -15,9 +15,6 @@ const TodoCategoryPage: FC = () => {
   const [taskCategories, setTaskCategories] = useState<BizTaskCategory[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const { remove: removeNoteCategory, actionData: noteActionData, close: closeNote, add: addNote, edit: editNote } = useAction<BizNoteCategory>({ url: '/todo/note/category', update: loadNoteCategories });
-  const { remove: removeTaskCategory, actionData: taskActionData, close: closeTask, add: addTask, edit: editTask } = useAction<BizTaskCategory>({ url: '/todo/task/category', update: loadTaskCategories });
-
   const loadNoteCategories = () => {
     setLoading(true);
     httpGet<{ rows: BizNoteCategory[] }>('/todo/note/category/list', { pageNum: 1, pageSize: 100 })
@@ -31,6 +28,9 @@ const TodoCategoryPage: FC = () => {
       .then(res => setTaskCategories(res.rows || []))
       .finally(() => setLoading(false));
   };
+
+  const { remove: removeNoteCategory, actionData: noteActionData, close: closeNote, add: addNote, edit: editNote } = useAction<BizNoteCategory>({ url: '/todo/note/category', update: loadNoteCategories });
+  const { remove: removeTaskCategory, actionData: taskActionData, close: closeTask, add: addTask, edit: editTask } = useAction<BizTaskCategory>({ url: '/todo/task/category', update: loadTaskCategories });
 
   useEffect(() => {
     if (activeTab === 'note') {
