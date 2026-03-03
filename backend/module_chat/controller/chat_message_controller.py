@@ -7,6 +7,7 @@
 """
 
 import json
+import time
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from pydantic_validation_decorator import ValidateFields
@@ -50,8 +51,8 @@ async def send_message_stream(
         query_db, send_message, current_user.user.user_id
     )
 
-    # 生成临时 AI 消息 ID
-    assistant_message_id = int(f"{user_message_id}_temp")
+    # 生成临时 AI 消息 ID（使用时间戳避免冲突）
+    assistant_message_id = int(time.time() * 1000)
 
     async def generate_stream():
         """生成流式响应"""
@@ -177,8 +178,8 @@ async def regenerate_message(
         query_db, message_id, regenerate_message, current_user.user.user_id
     )
 
-    # 生成临时 AI 消息 ID
-    assistant_message_id = int(f"{user_message_id}_temp")
+    # 生成临时 AI 消息 ID（使用时间戳避免冲突）
+    assistant_message_id = int(time.time() * 1000)
 
     async def generate_regenerate_stream():
         """生成重新生成的流式响应"""

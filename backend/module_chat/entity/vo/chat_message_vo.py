@@ -50,6 +50,7 @@ class SendMessageModel(BaseModel):
     enable_search: Optional[bool] = Field(default=False, description='是否启用联网搜索')
     attachments: Optional[List[int]] = Field(default=None, description='附件ID列表')
     temperature: Optional[float] = Field(default=None, description='温度参数')
+    top_p: Optional[float] = Field(default=None, description='采样参数')
     max_tokens: Optional[int] = Field(default=None, description='最大生成token数')
 
 
@@ -60,6 +61,9 @@ class RegenerateMessageModel(BaseModel):
     model_config = ConfigDict(alias_generator=to_camel)
 
     model_id: Optional[str] = Field(default=None, description='新的模型ID')
+    temperature: Optional[float] = Field(default=None, description='温度参数')
+    top_p: Optional[float] = Field(default=None, description='采样参数')
+    max_tokens: Optional[int] = Field(default=None, description='最大生成token数')
 
 
 class MessageListModel(BaseModel):

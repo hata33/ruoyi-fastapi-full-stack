@@ -16,6 +16,7 @@ from module_chat.entity.vo.chat_message_vo import ChatMessageModel, MessageListM
 from module_chat.entity.vo.common_vo import CrudResponseModel
 from module_chat.entity.do.chat_message_do import ChatMessage
 from utils.common_util import CamelCaseUtil
+from utils.log_util import logger
 import json
 
 

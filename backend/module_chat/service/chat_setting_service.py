@@ -13,6 +13,7 @@ from module_chat.dao.chat_setting_dao import ChatSettingDao
 from module_chat.entity.vo.chat_setting_vo import ChatUserSettingDetailModel, ChatUserSettingModel, UpdateChatUserSettingModel
 from module_chat.entity.vo.common_vo import CrudResponseModel
 from utils.common_util import CamelCaseUtil
+from utils.log_util import logger
 
 
 class ChatSettingService:
