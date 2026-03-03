@@ -59,6 +59,7 @@
 这个文件是整个后端应用的核心骨架，定义了应用的基本结构和启动流程，遵循了 FastAPI 的最佳实践和现代 Python Web 开发的设计模式
 """
 # 导入异步上下文管理器，用于管理FastAPI应用的生命周期
+from fastapi.openapi.docs import get_swagger_ui_html
 from contextlib import asynccontextmanager
 # 导入FastAPI框架核心类
 from fastapi import FastAPI
@@ -158,6 +159,13 @@ app = FastAPI(
     description=f'{AppConfig.app_name}接口文档',  # 设置API文档描述
     version=AppConfig.app_version,  # 设置API版本号
     lifespan=lifespan,  # 设置应用生命周期管理函数
+    docs_url=None,          # 禁用默认的 /docs
+    redoc_url=None,         # 可选：禁用默认的 /redoc
+    # 可以保留或删除 swagger_ui_parameters，因为 docs_url=None 后它已不生效
+    swagger_ui_parameters={
+        "swagger_js_url": "https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js",
+        "swagger_css_url": "https://unpkg.com/swagger-ui-dist@5/swagger-ui.css"
+    }
 )
 
 # 挂载子应用到主应用
@@ -173,7 +181,7 @@ controller_list = [
     # 基础功能模块
     {'router': loginController, 'tags': ['登录模块']},  # 用户登录相关API
     {'router': captchaController, 'tags': ['验证码模块']},  # 验证码生成与验证API
-    
+
     # 系统管理模块
     {'router': userController, 'tags': ['系统管理-用户管理']},  # 用户CRUD操作API
     {'router': roleController, 'tags': ['系统管理-角色管理']},  # 角色权限管理API
@@ -185,13 +193,13 @@ controller_list = [
     {'router': noticeController, 'tags': ['系统管理-通知公告管理']},  # 系统公告管理API
     {'router': logController, 'tags': ['系统管理-日志管理']},  # 系统日志查询API
     {'router': fileController, 'tags': ['系统管理-文件管理']},  # 文件管理API
-    
+
     # 系统监控模块
     {'router': onlineController, 'tags': ['系统监控-在线用户']},  # 在线用户监控API
     {'router': jobController, 'tags': ['系统监控-定时任务']},  # 定时任务管理API
     {'router': serverController, 'tags': ['系统监控-菜单管理']},  # 服务器监控API
     {'router': cacheController, 'tags': ['系统监控-缓存监控']},  # 缓存监控API
-    
+
     # 其他功能模块
     {'router': commonController, 'tags': ['通用模块']},  # 通用功能API
     {'router': genController, 'tags': ['代码生成']},  # 代码生成器API
@@ -204,18 +212,42 @@ controller_list = [
 
     # 每日任务管理模块
     {'router': dailyTaskController, 'tags': ['每日任务-任务管理']},  # 每日任务管理API
-    {'router': dailyTaskCategoryController, 'tags': ['每日任务-分类管理']},  # 每日任务分类API
+    {'router': dailyTaskCategoryController,
+        'tags': ['每日任务-分类管理']},  # 每日任务分类API
 
     # 聊天模块
-    {'router': chatModelController, 'tags': ['聊天-模型管理']},  # AI模型管理API
-    {'router': chatConversationController, 'tags': ['聊天-会话管理']},  # 会话管理API
-    {'router': chatTagController, 'tags': ['聊天-标签管理']},  # 标签管理API
-    {'router': chatMessageController, 'tags': ['聊天-消息管理']},  # 消息管理API
-    {'router': chatFileController, 'tags': ['聊天-文件管理']},  # 文件管理API
-    {'router': chatSettingController, 'tags': ['聊天-用户设置']},  # 用户设置API
+    {'router': chatModelController, 'tags': [
+        '聊天-模型管理'], 'show': True},  # AI模型管理API
+    {'router': chatConversationController, 'tags': [
+        '聊天-会话管理'], 'show': True},  # 会话管理API
+    {'router': chatTagController, 'tags': [
+        '聊天-标签管理'], 'show': True},  # 标签管理API
+    {'router': chatMessageController, 'tags': [
+        '聊天-消息管理'], 'show': True},  # 消息管理API
+    {'router': chatFileController, 'tags': [
+        '聊天-文件管理'], 'show': True},  # 文件管理API
+    {'router': chatSettingController, 'tags': [
+        '聊天-用户设置'], 'show': True},  # 用户设置API
 ]
 
-# 遍历控制器列表，将每个控制器注册到FastAPI应用
+
 for controller in controller_list:
-    # 使用include_router方法注册路由，设置对应的标签用于API文档分组
-    app.include_router(router=controller.get('router'), tags=controller.get('tags'))
+    router = controller.get('router')
+    tags = controller.get('tags')
+    show = controller.get('show', False)  # 默认为不显示
+    app.include_router(
+        router=router,
+        tags=tags,
+        include_in_schema=show   # 只有 show=True 的控制器中的接口才会出现在文档
+    )
+
+
+@app.get("/docs", include_in_schema=False)
+async def custom_swagger_ui_html():
+    return get_swagger_ui_html(
+        openapi_url=app.openapi_url,
+        title=app.title + " - Swagger UI",
+        # 使用国内更稳定的 CDN
+        swagger_js_url="https://cdn.bootcdn.net/ajax/libs/swagger-ui/5.10.3/swagger-ui-bundle.js",
+        swagger_css_url="https://cdn.bootcdn.net/ajax/libs/swagger-ui/5.10.3/swagger-ui.css",
+    )

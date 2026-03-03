@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from exceptions.exception import ServiceException
 from module_chat.dao.chat_conversation_dao import ChatConversationDao
 from module_chat.dao.chat_message_dao import ChatMessageDao
+from module_chat.entity.do.chat_conversation_do import ChatConversation
 from module_chat.entity.vo.chat_conversation_vo import (
     AddChatConversationModel,
     ChatConversationModel,
@@ -19,6 +20,7 @@ from module_chat.entity.vo.chat_conversation_vo import (
 )
 from module_chat.entity.vo.common_vo import CrudResponseModel
 from utils.common_util import CamelCaseUtil
+from utils.log_util import logger
 import json
 
 
@@ -111,19 +113,17 @@ class ChatConversationService:
         :return: 新增会话校验结果
         """
         # 构建会话对象
-        conversation_data = {
-            'title': page_object.title or '新对话',
-            'model_id': page_object.model_id or 'deepseek-chat',
-            'user_id': user_id,
-            'tag_list': json.dumps(page_object.tag_list or [], ensure_ascii=False),
-            'is_pinned': False,
-            'total_tokens': 0,
-            'message_count': 0,
-            'create_time': datetime.now(),
-            'update_time': datetime.now(),
-        }
-
-        conversation = ChatConversationModel(**conversation_data)
+        conversation = ChatConversation(
+            title=page_object.title or '新对话',
+            model_id=page_object.model_id or 'deepseek-chat',
+            user_id=user_id,
+            tag_list=json.dumps(page_object.tag_list or [], ensure_ascii=False),
+            is_pinned=False,
+            total_tokens=0,
+            message_count=0,
+            create_time=datetime.now(),
+            update_time=datetime.now(),
+        )
 
         try:
             add_conversation = await ChatConversationDao.add_conversation(query_db, conversation)

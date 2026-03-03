@@ -40,15 +40,7 @@ class UpdateChatUserSettingModel(BaseModel):
     default_model: Optional[str] = Field(default=None, description='默认模型')
     enable_search: Optional[bool] = Field(default=None, description='是否启用联网搜索')
     stream_output: Optional[bool] = Field(default=None, description='是否启用流式输出')
-    font_size: Optional[int] = Field(default=None, description='字体大小')
-
-    @Size(field_name='font_size', min_value=12, max_value=20, message='字体大小必须在12-20之间')
-    def get_font_size(self):
-        return self.font_size
-
-    def validate_fields(self):
-        if self.font_size is not None:
-            self.get_font_size()
+    font_size: Optional[int] = Field(default=None, ge=12, le=20, description='字体大小')
 
 
 class ChatUserSettingDetailModel(BaseModel):

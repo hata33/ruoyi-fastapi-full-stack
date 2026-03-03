@@ -87,7 +87,7 @@ class ChatModelService:
         try:
             if existing_config:
                 # 更新配置
-                edit_config = page_object.model_dump(exclude_unset=True, exclude={'config_id', 'user_id', 'create_time'}))
+                edit_config = page_object.model_dump(exclude_unset=True, exclude={'config_id', 'user_id', 'create_time'})
                 edit_config['config_id'] = existing_config.config_id
                 edit_config['update_time'] = datetime.now()
                 await ChatModelDao.edit_user_model_config(query_db, edit_config)

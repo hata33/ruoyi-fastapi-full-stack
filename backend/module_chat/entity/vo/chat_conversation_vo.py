@@ -73,23 +73,26 @@ class AddChatConversationModel(BaseModel):
     """
     新增会话模型
     """
-    model_config = ConfigDict(alias_generator=to_camel)
+    model_config = ConfigDict(
+        populate_by_name=True,
+        from_attributes=True
+    )
 
-    model_id: Optional[str] = Field(default=None, description='模型ID')
-    title: Optional[str] = Field(default='新对话', description='会话标题')
-    tag_list: Optional[List[str]] = Field(default=None, description='标签列表')
+    model_id: Optional[str] = Field(default='deepseek-chat', alias='modelId', description='模型ID')
+    title: Optional[str] = Field(default='新对话', alias='title', description='会话标题')
+    tag_list: Optional[List[str]] = Field(default=None, alias='tagList', description='标签列表')
 
 
 class UpdateChatConversationModel(BaseModel):
     """
     更新会话模型
     """
-    model_config = ConfigDict(alias_generator=to_camel)
+    model_config = ConfigDict(populate_by_name=True)
 
-    conversation_id: int = Field(description='会话ID')
-    title: Optional[str] = Field(default=None, description='会话标题')
-    model_id: Optional[str] = Field(default=None, description='模型ID')
-    tag_list: Optional[List[str]] = Field(default=None, description='标签列表')
+    conversation_id: int = Field(alias='conversationId', description='会话ID')
+    title: Optional[str] = Field(default=None, alias='title', description='会话标题')
+    model_id: Optional[str] = Field(default=None, alias='modelId', description='模型ID')
+    tag_list: Optional[List[str]] = Field(default=None, alias='tagList', description='标签列表')
 
 
 class DeleteChatConversationModel(BaseModel):
@@ -105,9 +108,9 @@ class PinConversationModel(BaseModel):
     """
     置顶会话模型
     """
-    model_config = ConfigDict(alias_generator=to_camel)
+    model_config = ConfigDict(populate_by_name=True)
 
-    is_pinned: bool = Field(description='是否置顶')
+    is_pinned: bool = Field(alias='isPinned', description='是否置顶')
 
 
 class ChatConversationDetailModel(BaseModel):

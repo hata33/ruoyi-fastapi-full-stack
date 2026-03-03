@@ -28,7 +28,11 @@
       "Bash(pnpm run:*)",
       "mcp__web-reader__webReader",
       "mcp__web-search-prime__webSearchPrime",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(timeout 30 python:*)",
+      "Bash(taskkill:*)",
+      "Bash(tasklist:*)",
+      "Bash(powershell:*)"
     ],
     "deny": [],
     "ask": []

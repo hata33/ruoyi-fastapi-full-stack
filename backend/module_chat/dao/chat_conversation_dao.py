@@ -70,18 +70,17 @@ class ChatConversationDao:
         return conversation_list
 
     @classmethod
-    async def add_conversation(cls, db: AsyncSession, conversation: ChatConversationModel):
+    async def add_conversation(cls, db: AsyncSession, conversation: ChatConversation):
         """
         新增会话数据库操作
 
         :param db: orm对象
-        :param conversation: 会话对象
+        :param conversation: 会话对象（数据库实体）
         :return: 新增会话对象
         """
-        db_conversation = ChatConversation(**conversation.model_dump())
-        db.add(db_conversation)
+        db.add(conversation)
         await db.flush()
-        return db_conversation
+        return conversation
 
     @classmethod
     async def edit_conversation(cls, db: AsyncSession, conversation: dict):
