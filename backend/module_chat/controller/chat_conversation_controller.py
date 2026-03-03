@@ -19,6 +19,7 @@ from module_admin.entity.vo.user_vo import CurrentUserModel
 from module_admin.service.login_service import LoginService
 from module_chat.entity.vo.chat_conversation_vo import (
     AddChatConversationModel,
+    AddChatConversationTagModel,
     DeleteChatConversationModel,
     PinConversationModel,
     UpdateChatConversationModel,
@@ -295,7 +296,7 @@ async def get_tag_list(
 @Log(title='标签管理', business_type=BusinessType.INSERT)
 async def add_tag(
     request: Request,
-    add_tag,
+    add_tag: AddChatConversationTagModel,
     query_db: AsyncSession = Depends(get_db),
     current_user: CurrentUserModel = Depends(LoginService.get_current_user),
 ):

@@ -118,8 +118,14 @@ class ChatConversationDao:
         update_data = {'is_pinned': is_pinned}
         if is_pinned and pin_time:
             update_data['pin_time'] = pin_time
+        else:
+            update_data['pin_time'] = None
+
         await db.execute(
-            update(ChatConversation).where(ChatConversation.conversation_id == conversation_id), [update_data]
+            update(ChatConversation)
+            .where(ChatConversation.conversation_id == conversation_id)
+            .values(**update_data)
+            .execution_options(synchronize_session=False)
         )
 
     @classmethod
@@ -136,6 +142,7 @@ class ChatConversationDao:
             update(ChatConversation)
             .where(ChatConversation.conversation_id == conversation_id)
             .values(message_count=ChatConversation.message_count + delta)
+            .execution_options(synchronize_session=False)
         )
 
     @classmethod
@@ -152,6 +159,7 @@ class ChatConversationDao:
             update(ChatConversation)
             .where(ChatConversation.conversation_id == conversation_id)
             .values(total_tokens=ChatConversation.total_tokens + delta)
+            .execution_options(synchronize_session=False)
         )
 
     @classmethod

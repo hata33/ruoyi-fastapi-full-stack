@@ -143,6 +143,7 @@ class ChatConversationTagModel(BaseModel):
     user_id: Optional[int] = Field(default=None, description='用户ID')
     create_time: Optional[datetime] = Field(default=None, description='创建时间')
     update_time: Optional[datetime] = Field(default=None, description='更新时间')
+    conversation_count: Optional[int] = Field(default=0, description='关联的会话数量')
 
     @NotBlank(field_name='tag_name', message='标签名称不能为空')
     @Size(field_name='tag_name', min_length=0, max_length=20, message='标签名称不能超过20个字符')
@@ -157,30 +158,30 @@ class AddChatConversationTagModel(BaseModel):
     """
     新增标签模型
     """
-    model_config = ConfigDict(alias_generator=to_camel)
+    model_config = ConfigDict(populate_by_name=True)
 
-    tag_name: str = Field(description='标签名称')
-    tag_color: Optional[str] = Field(default=None, description='标签颜色')
+    tag_name: str = Field(alias='tagName', description='标签名称')
+    tag_color: Optional[str] = Field(default=None, alias='tagColor', description='标签颜色')
 
 
 class DeleteChatConversationTagModel(BaseModel):
     """
     删除标签模型
     """
-    model_config = ConfigDict(alias_generator=to_camel)
+    model_config = ConfigDict(populate_by_name=True)
 
-    tag_ids: str = Field(description='需要删除的标签ID')
+    tag_ids: str = Field(alias='tagIds', description='需要删除的标签ID')
 
 
 class ExportConversationModel(BaseModel):
     """
     导出会话模型
     """
-    model_config = ConfigDict(alias_generator=to_camel)
+    model_config = ConfigDict(populate_by_name=True)
 
-    download_url: str = Field(description='下载链接')
-    file_name: str = Field(description='文件名')
-    file_size: int = Field(description='文件大小')
+    download_url: str = Field(alias='downloadUrl', description='下载链接')
+    file_name: str = Field(alias='fileName', description='文件名')
+    file_size: int = Field(alias='fileSize', description='文件大小')
 
 
 class ConversationContextModel(BaseModel):

@@ -32,7 +32,8 @@
       "Bash(timeout 30 python:*)",
       "Bash(taskkill:*)",
       "Bash(tasklist:*)",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []

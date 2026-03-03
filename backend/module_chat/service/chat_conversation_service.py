@@ -46,22 +46,44 @@ class ChatConversationService:
         # 处理tag_list字段
         if is_page and hasattr(conversation_list_result, 'rows'):
             for row in conversation_list_result.rows:
-                if row.tag_list:
+                tag_list = row.get('tag_list') if isinstance(row, dict) else getattr(row, 'tag_list', None)
+                if tag_list:
                     try:
-                        row.tag_list = json.loads(row.tag_list) if isinstance(row.tag_list, str) else row.tag_list
+                        tag_list_parsed = json.loads(tag_list) if isinstance(tag_list, str) else tag_list
+                        if isinstance(row, dict):
+                            row['tag_list'] = tag_list_parsed
+                        else:
+                            row.tag_list = tag_list_parsed
                     except:
-                        row.tag_list = []
+                        if isinstance(row, dict):
+                            row['tag_list'] = []
+                        else:
+                            row.tag_list = []
                 else:
-                    row.tag_list = []
+                    if isinstance(row, dict):
+                        row['tag_list'] = []
+                    else:
+                        row.tag_list = []
         elif not is_page:
             for row in conversation_list_result:
-                if row.tag_list:
+                tag_list = row.get('tag_list') if isinstance(row, dict) else getattr(row, 'tag_list', None)
+                if tag_list:
                     try:
-                        row.tag_list = json.loads(row.tag_list) if isinstance(row.tag_list, str) else row.tag_list
+                        tag_list_parsed = json.loads(tag_list) if isinstance(tag_list, str) else tag_list
+                        if isinstance(row, dict):
+                            row['tag_list'] = tag_list_parsed
+                        else:
+                            row.tag_list = tag_list_parsed
                     except:
-                        row.tag_list = []
+                        if isinstance(row, dict):
+                            row['tag_list'] = []
+                        else:
+                            row.tag_list = []
                 else:
-                    row.tag_list = []
+                    if isinstance(row, dict):
+                        row['tag_list'] = []
+                    else:
+                        row.tag_list = []
 
         return conversation_list_result
 
