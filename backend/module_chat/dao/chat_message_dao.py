@@ -96,15 +96,21 @@ class ChatMessageDao:
         return list(reversed(message_list))
 
     @classmethod
-    async def add_message(cls, db: AsyncSession, message: ChatMessageModel):
+    async def add_message(cls, db: AsyncSession, message):
         """
         新增消息
 
         :param db: orm对象
-        :param message: 消息对象
+        :param message: 消息对象（ChatMessage DO实体或ChatMessageModel VO）
         :return: 消息对象
         """
-        db_message = ChatMessage(**message.model_dump())
+        # 如果是VO模型，转换为DO实体
+        if hasattr(message, 'model_dump'):
+            # ChatMessageModel (VO)
+            db_message = ChatMessage(**message.model_dump(by_alias=False, exclude_unset=True))
+        else:
+            # ChatMessage (DO实体)
+            db_message = message
         db.add(db_message)
         await db.flush()
         return db_message
@@ -121,7 +127,7 @@ class ChatMessageDao:
         await db.execute(update(ChatMessage), [message])
 
     @classmethod
-    async def update_message_content(cls, db: AsyncSession, message_id: int, content: str, thinking_content: str = None):
+    async def update_message_content(cls, db: AsyncSession, message_id: int, content: str, thinking_content: str = None, tokens_used: int = 0):
         """
         更新消息内容
 
@@ -129,11 +135,14 @@ class ChatMessageDao:
         :param message_id: 消息ID
         :param content: 消息内容
         :param thinking_content: 推理过程内容
+        :param tokens_used: 使用的token数
         :return:
         """
         update_data = {'content': content}
         if thinking_content is not None:
             update_data['thinking_content'] = thinking_content
+        if tokens_used > 0:
+            update_data['tokens_used'] = tokens_used
         await db.execute(update(ChatMessage).where(ChatMessage.message_id == message_id), [update_data])
 
     @classmethod
@@ -195,6 +204,39 @@ class ChatMessageDao:
             )
         ).scalars().first()
         return message
+
+    @classmethod
+    async def get_last_message(cls, db: AsyncSession, conversation_id: int):
+        """
+        获取会话的最后一条消息（别名方法）
+
+        :param db: orm对象
+        :param conversation_id: 会话ID
+        :return: 消息对象
+        """
+        return await cls.get_last_message_by_conversation(db, conversation_id)
+
+    @classmethod
+    async def get_messages_before(cls, db: AsyncSession, conversation_id: int, before_message_id: int):
+        """
+        获取指定消息之前的所有消息
+
+        :param db: orm对象
+        :param conversation_id: 会话ID
+        :param before_message_id: 消息ID
+        :return: 消息列表
+        """
+        messages = (
+            await db.execute(
+                select(ChatMessage)
+                .where(
+                    ChatMessage.conversation_id == conversation_id,
+                    ChatMessage.message_id < before_message_id
+                )
+                .order_by(ChatMessage.message_id.asc())
+            )
+        ).scalars().all()
+        return messages
 
     @classmethod
     async def get_conversation_context_tokens(cls, db: AsyncSession, conversation_id: int):

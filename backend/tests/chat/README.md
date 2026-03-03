@@ -4,14 +4,22 @@
 
 ```
 tests/chat/
-├── README.md                  # 本文件
-├── TEST_SOP.md                # 测试 SOP 文档
-├── run_all_tests.py           # 一键运行所有测试
-├── 01_test_basic_api.py       # 基础 API 测试
-├── 02_test_conversation.py    # 会话管理测试
-├── 03_test_pin_and_tags.py    # 置顶和标签测试
-└── 04_test_full_flow.py       # 完整流程测试
+├── README.md                   # 本文件
+├── TEST_SOP.md                 # 测试 SOP 文档
+├── INTERFACE_COMPARISON.md     # 接口对比分析（当前实现 vs 文档）
+├── run_all_tests.py            # 一键运行所有测试
+├── 01_test_basic_api.py        # 基础 API 测试
+├── 02_test_conversation.py     # 会话管理测试
+├── 03_test_pin_and_tags.py     # 置顶和标签测试
+└── 04_test_full_flow.py        # 完整流程测试
 ```
+
+## 文档说明
+
+| 文档 | 说明 |
+|------|------|
+| **TEST_SOP.md** | 测试标准操作程序，包含环境准备、启动流程、测试步骤 |
+| **INTERFACE_COMPARISON.md** | 接口对比分析，对比当前实现与 PRD/API设计文档的符合度 |
 
 ## 快速开始
 

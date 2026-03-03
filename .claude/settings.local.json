@@ -33,7 +33,9 @@
       "Bash(taskkill:*)",
       "Bash(tasklist:*)",
       "Bash(powershell:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(do echo:*)",
+      "Bash(sed:*)"
     ],
     "deny": [],
     "ask": []

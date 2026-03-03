@@ -14,6 +14,7 @@ from module_chat.dao.chat_message_dao import ChatMessageDao
 from module_chat.dao.chat_model_dao import ChatModelDao
 from module_chat.entity.vo.chat_message_vo import ChatMessageModel, MessageListModel, RegenerateMessageModel, SendMessageModel
 from module_chat.entity.vo.common_vo import CrudResponseModel
+from module_chat.entity.do.chat_message_do import ChatMessage
 from utils.common_util import CamelCaseUtil
 import json
 
@@ -51,14 +52,18 @@ class ChatMessageService:
         # 转换为VO并处理附件字段
         message_list = []
         for msg in messages:
-            msg_vo = ChatMessageModel(**CamelCaseUtil.transform_result(msg))
-            if msg_vo.attachments:
+            # 先将数据库对象转换为字典
+            msg_dict = CamelCaseUtil.transform_result(msg)
+            # 处理attachments字段：从JSON字符串转换为列表
+            if msg_dict.get('attachments'):
                 try:
-                    msg_vo.attachments = json.loads(msg_vo.attachments) if isinstance(msg_vo.attachments, str) else msg_vo.attachments
+                    msg_dict['attachments'] = json.loads(msg_dict['attachments']) if isinstance(msg_dict['attachments'], str) else msg_dict['attachments']
                 except:
-                    msg_vo.attachments = []
+                    msg_dict['attachments'] = []
             else:
-                msg_vo.attachments = []
+                msg_dict['attachments'] = []
+            # 创建VO对象
+            msg_vo = ChatMessageModel(**msg_dict)
             message_list.append(msg_vo)
 
         # 统计总消息数
@@ -101,8 +106,8 @@ class ChatMessageService:
         if not model_info or not model_info.is_enabled:
             raise ServiceException(message='模型不可用')
 
-        # 创建用户消息
-        user_message = ChatMessageModel(
+        # 创建用户消息（使用数据库实体）
+        user_message = ChatMessage(
             conversation_id=page_object.conversation_id,
             role='user',
             content=page_object.content,
@@ -121,11 +126,6 @@ class ChatMessageService:
             # 如果是首条消息，更新会话标题
             if conversation.message_count == 0:
                 title = page_object.content[:20] + '...' if len(page_object.content) > 20 else page_object.content
-                from module_chat.entity.vo.chat_conversation_vo import UpdateChatConversationModel
-                update_obj = UpdateChatConversationModel(
-                    conversation_id=page_object.conversation_id,
-                    title=title,
-                )
                 await ChatConversationDao.edit_conversation(
                     query_db, {
                         'conversation_id': page_object.conversation_id,
@@ -174,7 +174,7 @@ class ChatMessageService:
         :param message_id: 要重新生成的用户消息ID
         :param page_object: 重新生成参数
         :param user_id: 用户ID
-        :return: 用户消息ID
+        :return: (用户消息ID, 会话ID, 模型ID, 消息历史)
         """
         # 验证消息存在且是用户消息
         message = await ChatMessageDao.get_message_by_id(query_db, message_id)
@@ -190,6 +190,7 @@ class ChatMessageService:
             raise ServiceException(message='没有权限操作此消息')
 
         # 如果指定了新模型，更新会话模型
+        model_id = page_object.model_id or conversation.model_id
         if page_object.model_id:
             await ChatConversationDao.edit_conversation(
                 query_db, {
@@ -199,7 +200,72 @@ class ChatMessageService:
                 }
             )
 
-        # 返回用户消息ID，用于流式生成
+        # 构建消息历史（不包括当前用户消息之后的AI回复）
+        messages = await ChatMessageDao.get_messages_before(query_db, message.conversation_id, message_id)
+
+        # 转换为API格式
+        message_list = []
+        for msg in messages:
+            message_list.append({
+                "role": msg.role,
+                "content": msg.content
+            })
+
+        # 添加用户消息
+        message_list.append({
+            "role": "user",
+            "content": message.content
+        })
+
+        return message_id, message.conversation_id, model_id, message_list
+
+    @classmethod
+    async def replace_assistant_message_services(
+        cls, query_db: AsyncSession, conversation_id: int, content: str, thinking_content: str = None, tokens_used: int = 0
+    ):
+        """
+        替换最后一条AI助手消息service（用于重新生成）
+
+        :param query_db: orm对象
+        :param conversation_id: 会话ID
+        :param content: 消息内容
+        :param thinking_content: 推理过程内容
+        :param tokens_used: 使用的token数
+        :return: 消息ID
+        """
+        # 获取最后一条消息
+        last_message = await ChatMessageDao.get_last_message(query_db, conversation_id)
+
+        if last_message and last_message.role == 'assistant':
+            # 更新最后一条助手消息
+            await ChatMessageDao.update_message_content(
+                query_db,
+                last_message.message_id,
+                content,
+                thinking_content,
+                tokens_used
+            )
+            message_id = last_message.message_id
+        else:
+            # 创建新的助手消息
+            assistant_message = ChatMessage(
+                conversation_id=conversation_id,
+                role='assistant',
+                content=content,
+                thinking_content=thinking_content,
+                tokens_used=tokens_used,
+                user_id=0,  # AI消息没有用户ID
+                create_time=datetime.now(),
+                update_time=datetime.now(),
+            )
+            msg = await ChatMessageDao.add_message(query_db, assistant_message)
+            message_id = msg.message_id
+
+        # 更新会话累计token数
+        if tokens_used > 0:
+            await ChatConversationDao.update_conversation_tokens(query_db, conversation_id, tokens_used)
+
+        await query_db.commit()
         return message_id
 
     @classmethod
@@ -216,7 +282,7 @@ class ChatMessageService:
         :param tokens_used: 使用的token数
         :return: 消息对象
         """
-        assistant_message = ChatMessageModel(
+        assistant_message = ChatMessage(
             conversation_id=conversation_id,
             role='assistant',
             content=content,

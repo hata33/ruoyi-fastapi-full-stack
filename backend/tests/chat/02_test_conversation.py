@@ -30,7 +30,7 @@ async def test():
 
         if result.get("code") == 200:
             rows = result.get("rows", [])
-            print(f"✅ 获取列表成功，共 {len(rows)} 条")
+            print(f"[PASS] 获取列表成功，共 {len(rows)} 条")
             if rows:
                 conv_id = rows[0].get("conversationId")
                 print(f"   第一条会话ID: {conv_id}")
@@ -69,11 +69,11 @@ async def test():
                 if rows2:
                     tag_list = rows2[0].get("tag_list")
                     if isinstance(tag_list, list):
-                        print(f"✅ tag_list 正确解析为数组: {tag_list}")
+                        print(f"[PASS] tag_list 正确解析为数组: {tag_list}")
                     else:
-                        print(f"❌ tag_list 类型错误: {type(tag_list)}, 值: {tag_list}")
+                        print(f"[FAIL] tag_list 类型错误: {type(tag_list)}, 值: {tag_list}")
         else:
-            print(f"❌ 获取列表失败: {result.get('msg')}")
+            print(f"[FAIL] 获取列表失败: {result.get('msg')}")
 
 
 if __name__ == "__main__":

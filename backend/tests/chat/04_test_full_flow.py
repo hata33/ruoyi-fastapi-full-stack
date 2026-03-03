@@ -17,7 +17,7 @@ async def test():
         )
         token = login.json()["token"]
         headers = {"Authorization": f"Bearer {token}"}
-        print("✅ 登录成功")
+        print("[PASS] 登录成功")
 
         # ============ 创建多个会话 ============
         print("\n>>> 创建3个测试会话")
@@ -32,7 +32,7 @@ async def test():
             if resp.json().get("code") == 200:
                 conv_id = resp.json()["data"]["conversation_id"]
                 conv_ids.append((conv_id, title))
-                print(f"   ✅ 创建会话: {title} (ID: {conv_id})")
+                print(f"   [PASS] 创建会话: {title} (ID: {conv_id})")
 
         # ============ 查看会话列表 ============
         print("\n>>> 查看会话列表")
@@ -56,7 +56,7 @@ async def test():
                 json={"isPinned": True}
             )
             if resp.json().get("code") == 200:
-                print(f"   ✅ 已置顶: {conv_ids[0][1]}")
+                print(f"   [PASS] 已置顶: {conv_ids[0][1]}")
 
         # ============ 创建分类标签 ============
         print("\n>>> 创建分类标签")
@@ -76,7 +76,7 @@ async def test():
             if resp.json().get("code") == 200:
                 tag_id = resp.json()["data"]["tag_id"]
                 tag_ids.append(tag_id)
-                print(f"   ✅ 创建标签: {tag['tagName']}")
+                print(f"   [PASS] 创建标签: {tag['tagName']}")
 
         # ============ 查看所有标签 ============
         print("\n>>> 查看所有标签")
@@ -95,7 +95,7 @@ async def test():
                 f"http://localhost:9099/api/chat/tags/{tag_id}",
                 headers=headers
             )
-        print(f"   ✅ 删除 {len(tag_ids)} 个标签")
+        print(f"   [PASS] 删除 {len(tag_ids)} 个标签")
 
         # 删除会话
         for conv_id, _ in conv_ids:
@@ -103,10 +103,10 @@ async def test():
                 f"http://localhost:9099/api/chat/conversations/{conv_id}",
                 headers=headers
             )
-        print(f"   ✅ 删除 {len(conv_ids)} 个会话")
+        print(f"   [PASS] 删除 {len(conv_ids)} 个会话")
 
         print("\n" + "="*40)
-        print("✅ 完整流程测试完成")
+        print("[PASS] 完整流程测试完成")
         print("="*40)
 
 

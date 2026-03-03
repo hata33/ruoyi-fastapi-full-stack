@@ -43,16 +43,16 @@ async def test():
             data = result.get("data", {})
             conv_id = data.get("conversation_id")
             model_id = data.get("model_id")
-            print(f"\n✅ 测试通过")
+            print(f"\n[PASS] 测试通过")
             print(f"   会话ID: {conv_id}")
             print(f"   模型ID: {model_id}")
 
             if model_id == "deepseek-chat":
-                print("   ✅ model_id 正确保存")
+                print("   [PASS] model_id 正确保存")
             else:
-                print(f"   ❌ model_id 错误: 期望 'deepseek-chat', 实际 '{model_id}'")
+                print(f"   [FAIL] model_id 错误: 期望 'deepseek-chat', 实际 '{model_id}'")
         else:
-            print(f"\n❌ 测试失败: {result.get('msg')}")
+            print(f"\n[FAIL] 测试失败: {result.get('msg')}")
 
 
 if __name__ == "__main__":

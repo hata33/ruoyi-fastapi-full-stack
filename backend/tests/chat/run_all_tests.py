@@ -10,7 +10,8 @@ TEST_SCRIPTS = [
     "01_test_basic_api.py",
     "02_test_conversation.py",
     "03_test_pin_and_tags.py",
-    "04_test_full_flow.py"
+    "04_test_full_flow.py",
+    "05_test_new_features.py"
 ]
 
 # 颜色输出
@@ -38,10 +39,10 @@ def run_test(script_path):
     )
 
     if result.returncode == 0:
-        print(f"{Colors.GREEN}✅ {script_path.name} 通过{Colors.ENDC}\n")
+        print(f"{Colors.GREEN}[PASS] {script_path.name} 通过{Colors.ENDC}\n")
         return True
     else:
-        print(f"{Colors.RED}❌ {script_path.name} 失败{Colors.ENDC}\n")
+        print(f"{Colors.RED}[FAIL] {script_path.name} 失败{Colors.ENDC}\n")
         return False
 
 def main():
@@ -52,9 +53,9 @@ def main():
     try:
         import httpx
         httpx.get("http://localhost:9099/login", timeout=2)
-        print(f"{Colors.GREEN}✅ 服务器运行中{Colors.ENDC}\n")
+        print(f"{Colors.GREEN}[PASS] 服务器运行中{Colors.ENDC}\n")
     except:
-        print(f"{Colors.RED}❌ 服务器未启动！{Colors.ENDC}")
+        print(f"{Colors.RED}[FAIL] 服务器未启动！{Colors.ENDC}")
         print(f"请先运行: python start_server.py\n")
         return
 
@@ -69,7 +70,7 @@ def main():
             passed = run_test(script_path)
             results.append((script_name, passed))
         else:
-            print(f"{Colors.RED}⚠️ 文件不存在: {script_name}{Colors.ENDC}\n")
+            print(f"{Colors.RED}[WARN] 文件不存在: {script_name}{Colors.ENDC}\n")
             results.append((script_name, False))
 
     # 汇总结果
@@ -79,15 +80,15 @@ def main():
     total_count = len(results)
 
     for script_name, passed in results:
-        status = f"{Colors.GREEN}✅ 通过{Colors.ENDC}" if passed else f"{Colors.RED}❌ 失败{Colors.ENDC}"
+        status = f"{Colors.GREEN}[PASS]{Colors.ENDC}" if passed else f"{Colors.RED}[FAIL]{Colors.ENDC}"
         print(f"  {script_name:<30} {status}")
 
     print(f"\n总计: {passed_count}/{total_count} 通过")
 
     if passed_count == total_count:
-        print(f"{Colors.GREEN}🎉 所有测试通过！{Colors.ENDC}")
+        print(f"{Colors.GREEN}[SUCCESS] 所有测试通过！{Colors.ENDC}")
     else:
-        print(f"{Colors.RED}⚠️ 部分测试失败，请检查日志{Colors.ENDC}")
+        print(f"{Colors.RED}[WARNING] 部分测试失败，请检查日志{Colors.ENDC}")
 
 if __name__ == "__main__":
     main()

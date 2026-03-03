@@ -154,61 +154,69 @@ async def regenerate_message(
     """
     重新生成消息
 
-    :param message_id: 消息ID
+    :param message_id: 消息ID（用户消息）
     :param regenerate_message: 重新生成参数
     :return: SSE流
     """
-    # 获取用户消息ID
-    user_message_id = await ChatMessageService.regenerate_message_services(
+    # 获取用户消息ID和相关信息
+    user_message_id, conversation_id, model_id, messages = await ChatMessageService.regenerate_message_services(
         query_db, message_id, regenerate_message, current_user.user.user_id
     )
 
     async def generate_regenerate_stream():
         """生成重新生成的流式响应"""
         try:
+            # 获取 DeepSeek 客户端
+            deepseek_client = get_deepseek_client()
+
             # 发送message_start事件
             yield f"event: message_start\ndata: {json.dumps({'messageId': user_message_id})}\n\n"
 
-            # 模拟AI回复内容
-            response_content = "这是重新生成的AI回复内容。"
+            # 准备响应内容
+            response_content = ""
+            thinking_content = ""
 
-            # 发送内容增量
-            for chunk in response_content:
-                yield f"event: content_delta\ndata: {json.dumps({'content': chunk})}\n\n"
+            # 调用 DeepSeek API
+            async for event in deepseek_client.chat_stream(
+                messages=messages,
+                model=model_id or deepseek_client.MODEL_CHAT,
+                temperature=regenerate_message.temperature,
+                top_p=regenerate_message.top_p,
+                max_tokens=regenerate_message.max_tokens,
+            ):
+                event_type = event.get("event")
+                event_data = event.get("data", {})
 
-            # 发送message_end事件
-            yield f"event: message_end\ndata: {json.dumps({'tokensUsed': len(response_content)})}\n\n"
+                if event_type == "thinking_start":
+                    yield f"event: thinking_start\ndata: {json.dumps({})}\n\n"
+
+                elif event_type == "thinking_delta":
+                    thinking_content += event_data.get("content", "")
+                    yield f"event: thinking_delta\ndata: {json.dumps({'content': event_data.get('content', '')})}\n\n"
+
+                elif event_type == "thinking_end":
+                    yield f"event: thinking_end\ndata: {json.dumps({})}\n\n"
+
+                elif event_type == "content_delta":
+                    response_content += event_data.get("content", "")
+                    yield f"event: content_delta\ndata: {json.dumps({'content': event_data.get('content', '')})}\n\n"
+
+                elif event_type == "message_end":
+                    # 创建助手消息记录（注意：这里需要替换之前的助手消息）
+                    await ChatMessageService.replace_assistant_message_services(
+                        query_db,
+                        conversation_id,
+                        response_content,
+                        thinking_content if thinking_content else None,
+                        event_data.get("tokens_used", 0),
+                    )
+
+                    # 发送结束事件
+                    yield f"event: message_end\ndata: {json.dumps({**event_data})}\n\n"
+                    break
 
         except Exception as e:
             logger.error(f'重新生成失败: {str(e)}')
             yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
 
     return StreamingResponse(generate_regenerate_stream(), media_type="text/event-stream")
-
-
-@chatMessageController.get(
-    '/conversations/{conversation_id}',
-    dependencies=[Depends(CheckUserInterfaceAuth('chat:message:list'))],
-)
-async def get_message_list(
-    request: Request,
-    conversation_id: int,
-    before_message_id: Optional[int] = None,
-    page_size: int = 50,
-    query_db: AsyncSession = Depends(get_db),
-    current_user: CurrentUserModel = Depends(LoginService.get_current_user),
-):
-    """
-    获取消息列表
-
-    :param conversation_id: 会话ID
-    :param before_message_id: 获取此消息之前的消息
-    :param page_size: 每页数量
-    :return: 消息列表
-    """
-    message_list_result = await ChatMessageService.get_message_list_services(
-        query_db, conversation_id, current_user.user.user_id, before_message_id, page_size
-    )
-    logger.info(f'获取会话{conversation_id}的消息列表成功')
-
-    return ResponseUtil.success(data=message_list_result)

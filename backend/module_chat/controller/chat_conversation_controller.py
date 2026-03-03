@@ -262,6 +262,36 @@ async def export_conversation(
     return ResponseUtil.success(data=export_result)
 
 
+@chatConversationController.get(
+    '/{conversation_id}/messages',
+    dependencies=[Depends(CheckUserInterfaceAuth('chat:message:list'))],
+)
+async def get_conversation_messages(
+    request: Request,
+    conversation_id: int,
+    before_message_id: Optional[int] = None,
+    page_size: int = 50,
+    query_db: AsyncSession = Depends(get_db),
+    current_user: CurrentUserModel = Depends(LoginService.get_current_user),
+):
+    """
+    获取会话消息列表
+
+    :param conversation_id: 会话ID
+    :param before_message_id: 获取此消息之前的消息（向上滚动）
+    :param page_size: 每页数量，默认50
+    :return: 消息列表
+    """
+    from module_chat.service.chat_message_service import ChatMessageService
+
+    message_list_result = await ChatMessageService.get_message_list_services(
+        query_db, conversation_id, current_user.user.user_id, before_message_id, page_size
+    )
+    logger.info(f'获取会话{conversation_id}的消息列表成功')
+
+    return ResponseUtil.success(data=message_list_result)
+
+
 # 标签相关接口
 
 
