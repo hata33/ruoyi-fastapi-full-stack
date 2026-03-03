@@ -50,6 +50,11 @@ class RedisUtil:
             db=RedisConfig.redis_database,            # 使用的数据库索引
             encoding='utf-8',                         # 编码方式
             decode_responses=True,                    # 自动解码响应，返回Python字符串而非字节
+            socket_connect_timeout=10,                # 连接超时时间（秒）
+            socket_timeout=10,                        # 读写超时时间（秒）
+            retry_on_timeout=True,                    # 超时时自动重试
+            retry_on_error=[TimeoutError],            # 超时错误时重试
+            health_check_interval=30,                  # 健康检查间隔（秒）
         )
         # 测试连接是否成功
         try:

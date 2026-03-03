@@ -25,6 +25,7 @@ const TodoTask = lazy(() => import('@/pages/todo/task.tsx'))
 const TodoCategory = lazy(() => import('@/pages/todo/category.tsx'))
 const DailyTask = lazy(() => import('@/pages/todo/daily-task.tsx'))
 const DailyTaskCategory = lazy(() => import('@/pages/todo/daily-task-category.tsx'))
+const ChatPage = lazy(() => import('@/pages/chat/ChatPage'))
 
 const Router: FC = () => {
   const location = useLocation();
@@ -115,6 +116,14 @@ const Router: FC = () => {
           {
             path: 'daily-task-category',
             element: <DailyTaskCategory/>
+          },
+          {
+            path: 'chat',
+            element: <ChatPage/>
+          },
+          {
+            path: 'chat/:conversationId',
+            element: <ChatPage/>
           }
         ],
       },

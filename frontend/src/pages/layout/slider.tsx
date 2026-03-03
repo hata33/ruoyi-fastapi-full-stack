@@ -56,6 +56,18 @@ const Slider: FC = () => {
         label: "首页",
       },
       {
+        key: "/chat-menu",
+        icon: <icons.MessageOutlined />,
+        label: "AI 对话",
+        children: [
+          {
+            key: "/chat",
+            icon: <icons.WechatOutlined />,
+            label: "新建对话",
+          },
+        ],
+      },
+      {
         key: "/daily-task-menu",
         icon: <icons.CheckSquareOutlined />,
         label: "每日任务",

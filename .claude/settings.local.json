@@ -35,7 +35,8 @@
       "Bash(powershell:*)",
       "Bash(rm:*)",
       "Bash(do echo:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(npx tsc --noEmit)"
     ],
     "deny": [],
     "ask": []

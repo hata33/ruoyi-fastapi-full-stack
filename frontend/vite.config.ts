@@ -24,12 +24,12 @@ export default defineConfig(({ mode }) => {
       port: Number(env.VITE_PORT) || 5173,
       proxy: {
         "/dev-api": {
-          target: env.VITE_API_TARGET || "http://localhost:8001",
+          target: env.VITE_API_TARGET || "http://localhost:9099",
           changeOrigin: true,
           rewrite: (p) => p.replace(/^\/dev-api/, ""),
         },
         "/profile": {
-          target: env.VITE_PROFILE_TARGET || "http://localhost:8001",
+          target: env.VITE_PROFILE_TARGET || "http://localhost:9099",
           changeOrigin: true,
         },
         "/deepseekr1": {
