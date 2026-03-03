@@ -28,14 +28,16 @@ const Userinfo: FC = () => {
       const formData = new FormData()
       formData.append('avatarfile', file)
       setAvatarLoading(true)
-      http.post<null, { imgUrl: string }>('/system/user/profile/avatar', formData)
+      http.post<{ imgUrl: string }>('/system/user/profile/avatar', formData)
         .then((res) => {
-          setUserinfo(prevState => {
-            return {
-              ...prevState,
-              avatar: res.imgUrl
-            }
-          })
+          if (res.code === 200) {
+            setUserinfo(prevState => {
+              return {
+                ...prevState,
+                avatar: res.data.imgUrl
+              }
+            })
+          }
         })
         .finally(() => {
           setAvatarLoading(false)

@@ -1,13 +1,22 @@
-import axios from "axios";
+import axios, { InternalAxiosRequestConfig, AxiosResponse } from "axios";
 import { getStorage } from ".";
 
-// axios.defaults.headers['Content-Type'] = 'application/json;charset=utf-8'
+/**
+ * API 响应基础类型
+ */
+export interface ApiResponse<T = any> {
+  code: number;
+  data: T;
+  msg: string;
+}
 
-const http = axios.create({
+// 创建 axios 实例
+const axiosInstance = axios.create({
   baseURL: import.meta.env.DEV ? "/dev-api" : "/prod-api",
 });
 
-http.interceptors.request.use(
+// 请求拦截器
+axiosInstance.interceptors.request.use(
   (config) => {
     config.headers.Authorization = "Bearer " + (getStorage("token") || "");
     return config;
@@ -17,7 +26,8 @@ http.interceptors.request.use(
   }
 );
 
-http.interceptors.response.use(
+// 响应拦截器
+axiosInstance.interceptors.response.use(
   (res) => {
     if (res.config.responseType === 'blob') {
       return Promise.resolve(res.data)
@@ -33,5 +43,28 @@ http.interceptors.response.use(
     return Promise.reject({ msg: "网络错误，请稍后再试" });
   }
 );
+
+// 创建函数形式的 http 客户端，支持 http(config) 调用
+function httpClient<T = any>(config: any): Promise<ApiResponse<T>> {
+  return axiosInstance.request(config);
+}
+
+// 添加快捷方法到函数对象
+httpClient.get = <T = any>(url: string, config?: any): Promise<ApiResponse<T>> =>
+  axiosInstance.get(url, config);
+
+httpClient.post = <T = any>(url: string, data?: any, config?: any): Promise<ApiResponse<T>> =>
+  axiosInstance.post(url, data, config);
+
+httpClient.put = <T = any>(url: string, data?: any, config?: any): Promise<ApiResponse<T>> =>
+  axiosInstance.put(url, data, config);
+
+httpClient.delete = <T = any>(url: string, config?: any): Promise<ApiResponse<T>> =>
+  axiosInstance.delete(url, config);
+
+httpClient.request = <T = any>(config: any): Promise<ApiResponse<T>> =>
+  axiosInstance.request(config);
+
+const http = httpClient;
 
 export default http;

@@ -7,11 +7,16 @@ tests/chat/
 ├── README.md                   # 本文件
 ├── TEST_SOP.md                 # 测试 SOP 文档
 ├── INTERFACE_COMPARISON.md     # 接口对比分析（当前实现 vs 文档）
+├── __init__.py                 # 测试套件初始化
 ├── run_all_tests.py            # 一键运行所有测试
 ├── 01_test_basic_api.py        # 基础 API 测试
 ├── 02_test_conversation.py     # 会话管理测试
 ├── 03_test_pin_and_tags.py     # 置顶和标签测试
-└── 04_test_full_flow.py        # 完整流程测试
+├── 04_test_full_flow.py        # 完整流程测试
+├── 05_test_new_features.py     # 新增功能测试
+├── 06_test_deepseek_client.py  # DeepSeek 客户端测试
+├── 07_test_deepseek_simple.py  # 流式数据简化测试
+└── 08_test_deepseek_stream.py  # 端到端流式测试
 ```
 
 ## 文档说明
@@ -20,6 +25,48 @@ tests/chat/
 |------|------|
 | **TEST_SOP.md** | 测试标准操作程序，包含环境准备、启动流程、测试步骤 |
 | **INTERFACE_COMPARISON.md** | 接口对比分析，对比当前实现与 PRD/API设计文档的符合度 |
+
+## DeepSeek 测试套件
+
+### 快速测试
+
+```bash
+# 运行所有 DeepSeek 测试
+pytest tests/chat/06_test_deepseek*.py tests/chat/07_test_deepseek*.py tests/chat/08_test_deepseek*.py -v
+
+# 单独运行测试
+python tests/chat/06_test_deepseek_client.py  # 客户端单元测试
+python tests/chat/07_test_deepseek_simple.py  # 简化集成测试
+python tests/chat/08_test_deepseek_stream.py  # 完整端到端测试
+```
+
+### 测试说明
+
+#### 06_test_deepseek_client.py - DeepSeek 客户端测试
+- **类型**: 单元测试
+- **内容**: DeepSeek Client 功能验证
+- **测试项**:
+  - ✓ 模拟模式（无 API Key）
+  - ✓ Reasoner 推理模型
+  - ○ 真实 API（需配置 Key）
+
+#### 07_test_deepseek_simple.py - 流式数据简化测试
+- **类型**: 集成测试
+- **内容**: 流式输出验证
+- **测试项**:
+  - ✓ Chat 模型流式输出
+  - ✓ Reasoner 推理流程
+
+#### 08_test_deepseek_stream.py - 端到端流式测试
+- **类型**: 端到端测试
+- **内容**: 完整 API 流程
+- **测试项**:
+  - ✓ 用户认证
+  - ✓ 创建会话
+  - ✓ 流式消息
+  - ✓ SSE 事件格式
+
+## 原有测试套件
 
 ## 快速开始
 

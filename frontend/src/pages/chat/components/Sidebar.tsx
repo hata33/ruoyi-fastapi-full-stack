@@ -35,7 +35,9 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
         title: '新对话',
         modelId: 'deepseek-chat',
       });
-      setCurrentConversation(newConversation.conversationId);
+      if (newConversation) {
+        setCurrentConversation(newConversation.conversationId);
+      }
     } catch (error: any) {
       console.error('Failed to create conversation:', error);
     }

@@ -123,7 +123,7 @@ interface RequestData {
 
 function request<T>({url, method = 'GET', data = null, toastError = true, modal, message, params = {}, responseType, config}: RequestData) {
   const queryUrl = `${url}?${tansParams({ ...params })}`
-  return http<any, T>({
+  return http<T>({
     method,
     url: queryUrl.slice(0, -1),
     data: data,
@@ -133,7 +133,7 @@ function request<T>({url, method = 'GET', data = null, toastError = true, modal,
     .then((res) => {
       return Promise.resolve(res)
     })
-    .catch(err => {
+    .catch((err: any) => {
       if (toastError) {
         message.error(err.msg)
       }

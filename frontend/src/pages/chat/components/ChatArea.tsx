@@ -55,6 +55,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({ className }) => {
           title: data.content.slice(0, 50) + (data.content.length > 50 ? '...' : ''),
           modelId: data.modelId || 'deepseek-chat',
         });
+        if (!newConversation) {
+          throw new Error('Failed to create conversation');
+        }
         conversationId = newConversation.conversationId;
         setCurrentConversation(conversationId);
       } catch (error) {
@@ -64,7 +67,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ className }) => {
     }
 
     // 发送消息
-    return sendMessage({ ...data, conversationId });
+    await sendMessage({ ...data, conversationId });
   }, [currentConversationId, createConversation, setCurrentConversation, sendMessage]);
 
   // 处理建议卡片点击（发送预设消息）

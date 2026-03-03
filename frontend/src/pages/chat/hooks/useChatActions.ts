@@ -16,6 +16,7 @@ import type {
   UserSettings,
   ModelConfig,
   ChatFile,
+  Conversation,
 } from '../types';
 
 // ==================== 会话相关 Hooks ====================
@@ -46,7 +47,7 @@ export const useConversations = () => {
   }, [dispatch]);
 
   /** 创建会话 */
-  const createConversation = useCallback(async (data: CreateConversationRequest) => {
+  const createConversation = useCallback(async (data: CreateConversationRequest): Promise<Conversation | null> => {
     try {
       const res = await chatApi.createConversation(data);
       if (res.code === 200) {
@@ -146,7 +147,7 @@ export const useMessages = () => {
     }
   }, [dispatch]);
 
-  /** 发送消息（建立 SSE 连接） */
+  /** 发送消息（流式） */
   const sendMessage = useCallback(async (data: SendMessageRequest, onEvent?: (event: SSEEvent) => void) => {
     if (!currentConversationId) {
       throw new Error('No current conversation');
@@ -167,18 +168,10 @@ export const useMessages = () => {
       payload: { conversationId: currentConversationId, message: userMessage },
     });
 
-    // 建立 SSE 连接
-    const url = chatApi.getStreamMessageUrl(currentConversationId, data);
-    const eventSource = new EventSource(url);
-
-    eventSource.onmessage = (e) => {
-      try {
-        const eventData = JSON.parse(e.data);
-        const event: SSEEvent = {
-          type: e.type as SSEEvent['type'],
-          data: eventData,
-        };
-
+    // 发起流式请求
+    const cancelStream = chatApi.sendMessageStream(
+      { ...data, conversationId: currentConversationId },
+      (event) => {
         // 处理 SSE 事件
         switch (event.type) {
           case 'message_start':
@@ -248,22 +241,18 @@ export const useMessages = () => {
         }
 
         onEvent?.(event);
-
-        if (event.type === 'message_end' || event.type === 'error') {
-          eventSource.close();
-        }
-      } catch (error) {
-        console.error('Failed to parse SSE data:', error);
+      },
+      (error) => {
+        console.error('Stream error:', error);
+        dispatch({ type: 'SET_IS_STREAMING', payload: false });
+      },
+      () => {
+        // Stream completed
+        console.log('Stream completed');
       }
-    };
+    );
 
-    eventSource.onerror = (error) => {
-      console.error('SSE Error:', error);
-      eventSource.close();
-      dispatch({ type: 'SET_IS_STREAMING', payload: false });
-    };
-
-    return eventSource;
+    return cancelStream;
   }, [currentConversationId, dispatch, streamingMessage]);
 
   /** 停止生成 */
@@ -281,18 +270,11 @@ export const useMessages = () => {
 
   /** 重新生成 */
   const regenerate = useCallback(async (messageId: number, modelId?: string) => {
-    const url = chatApi.getRegenerateMessageUrl(messageId, modelId);
-    const eventSource = new EventSource(url);
-
-    eventSource.onmessage = (e) => {
-      try {
-        const eventData = JSON.parse(e.data);
-        const event: SSEEvent = {
-          type: e.type as SSEEvent['type'],
-          data: eventData,
-        };
-
-        // 处理 SSE 事件（内联）
+    const cancelStream = chatApi.regenerateMessageStream(
+      messageId,
+      modelId,
+      (event) => {
+        // 处理 SSE 事件
         switch (event.type) {
           case 'message_start':
             dispatch({
@@ -333,19 +315,18 @@ export const useMessages = () => {
             break;
 
           case 'error':
+            console.error('SSE Error:', event.data);
             dispatch({ type: 'SET_IS_STREAMING', payload: false });
             break;
         }
-
-        if (event.type === 'message_end' || event.type === 'error') {
-          eventSource.close();
-        }
-      } catch (error) {
-        console.error('Failed to parse SSE data:', error);
+      },
+      (error) => {
+        console.error('Regenerate stream error:', error);
+        dispatch({ type: 'SET_IS_STREAMING', payload: false });
       }
-    };
+    );
 
-    return eventSource;
+    return cancelStream;
   }, [currentConversationId, dispatch, streamingMessage]);
 
   return {

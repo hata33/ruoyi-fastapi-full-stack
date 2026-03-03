@@ -312,12 +312,12 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         // 加载模型列表
         const modelsRes = await chatApi.fetchModels(true);
-        if (modelsRes.data.code === 200) {
-          dispatch({ type: 'SET_MODELS', payload: modelsRes.data.data });
-          if (modelsRes.data.data.length > 0) {
+        if (modelsRes.code === 200) {
+          dispatch({ type: 'SET_MODELS', payload: modelsRes.data });
+          if (modelsRes.data.length > 0) {
             dispatch({
               type: 'SET_CURRENT_MODEL',
-              payload: modelsRes.data.data[0].modelCode,
+              payload: modelsRes.data[0].modelCode,
             });
           }
         }
