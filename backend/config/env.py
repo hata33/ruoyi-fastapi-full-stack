@@ -145,6 +145,17 @@ class CachePathConfig:
     PATHSTR = 'caches'
 
 
+class DeepSeekSettings(BaseSettings):
+    """
+    DeepSeek AI 配置
+    """
+
+    deepseek_api_key: str = ''
+    deepseek_api_base: str = 'https://api.deepseek.com/v1'
+    deepseek_timeout: int = 60
+    deepseek_max_retries: int = 3
+
+
 class GetConfig:
     """
     获取配置
@@ -201,6 +212,14 @@ class GetConfig:
         # 实例上传配置
         return UploadSettings()
 
+    @lru_cache()
+    def get_deepseek_config(self):
+        """
+        获取DeepSeek配置
+        """
+        # 实例DeepSeek配置
+        return DeepSeekSettings()
+
     @staticmethod
     def parse_cli_args():
         """
@@ -242,3 +261,5 @@ RedisConfig = get_config.get_redis_config()
 GenConfig = get_config.get_gen_config()
 # 上传配置
 UploadConfig = get_config.get_upload_config()
+# DeepSeek配置
+DeepSeekConfig = get_config.get_deepseek_config()

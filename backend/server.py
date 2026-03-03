@@ -104,6 +104,15 @@ from module_todo.controller.task_category_controller import taskCategoryControll
 # 导入每日任务管理模块控制器
 from module_task.controller.daily_task_controller import dailyTaskController
 from module_task.controller.daily_task_category_controller import dailyTaskCategoryController
+# 导入聊天模块控制器
+from module_chat.controller.chat_model_controller import chatModelController
+from module_chat.controller.chat_conversation_controller import (
+    chatConversationController,
+    chatTagController,
+)
+from module_chat.controller.chat_message_controller import chatMessageController
+from module_chat.controller.chat_file_controller import chatFileController
+from module_chat.controller.chat_setting_controller import chatSettingController
 # 导入子应用处理函数
 from sub_applications.handle import handle_sub_applications
 # 导入通用工具函数
@@ -196,6 +205,14 @@ controller_list = [
     # 每日任务管理模块
     {'router': dailyTaskController, 'tags': ['每日任务-任务管理']},  # 每日任务管理API
     {'router': dailyTaskCategoryController, 'tags': ['每日任务-分类管理']},  # 每日任务分类API
+
+    # 聊天模块
+    {'router': chatModelController, 'tags': ['聊天-模型管理']},  # AI模型管理API
+    {'router': chatConversationController, 'tags': ['聊天-会话管理']},  # 会话管理API
+    {'router': chatTagController, 'tags': ['聊天-标签管理']},  # 标签管理API
+    {'router': chatMessageController, 'tags': ['聊天-消息管理']},  # 消息管理API
+    {'router': chatFileController, 'tags': ['聊天-文件管理']},  # 文件管理API
+    {'router': chatSettingController, 'tags': ['聊天-用户设置']},  # 用户设置API
 ]
 
 # 遍历控制器列表，将每个控制器注册到FastAPI应用
