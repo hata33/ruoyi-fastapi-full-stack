@@ -142,12 +142,52 @@ export type SSEEventType =
   | 'thinking_delta'
   | 'thinking_end'
   | 'message_end'
+  | 'message_stopped'
   | 'error';
 
 /** SSE 事件数据 */
 export interface SSEEvent {
   type: SSEEventType;
   data: any;
+}
+
+/** message_start 事件数据 */
+export interface MessageStartData {
+  userMessageId: number;
+  assistantMessageId: number;
+  conversationId: number;
+}
+
+/** content_delta 事件数据 */
+export interface ContentDeltaData {
+  content: string;
+}
+
+/** thinking_delta 事件数据 */
+export interface ThinkingDeltaData {
+  content: string;
+}
+
+/** message_end 事件数据 */
+export interface MessageEndData {
+  messageId: number;
+  content: string;
+  thinkingContent?: string;
+  tokensUsed: number;
+  totalTokens: number;
+}
+
+/** message_stopped 事件数据 */
+export interface MessageStoppedData {
+  messageId: number;
+  content: string;
+  stoppedAt: string;
+}
+
+/** error 事件数据 */
+export interface ErrorEventData {
+  code: number;
+  message: string;
 }
 
 // ==================== 文件相关 ====================

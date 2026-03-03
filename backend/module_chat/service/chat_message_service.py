@@ -101,10 +101,14 @@ class ChatMessageService:
         # 确定使用的模型
         model_id = page_object.model_id or conversation.model_id
 
-        # 验证模型是否存在且启用
+        # 验证模型是否存在且启用（如果模型表有数据则校验，否则跳过校验直接使用前端传的模型）
         model_info = await ChatModelDao.get_model_by_code(query_db, model_id)
-        if not model_info or not model_info.is_enabled:
-            raise ServiceException(message='模型不可用')
+        if model_info:
+            if not model_info.is_enabled:
+                raise ServiceException(message='模型已禁用')
+        else:
+            # 模型表中没有该模型，记录警告但继续使用前端传的模型ID
+            logger.warning(f'模型 [{model_id}] 在数据库中不存在，将直接使用前端传递的模型ID')
 
         # 创建用户消息（使用数据库实体）
         user_message = ChatMessage(

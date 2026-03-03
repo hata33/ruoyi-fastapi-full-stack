@@ -779,18 +779,50 @@ DELETE /api/chat/tags/1,2,3
 
 | 事件类型 | 说明 |
 |---------|------|
-| message_start | 开始生成消息 |
+| message_start | 开始生成消息，返回用户消息和AI消息的ID |
 | content_delta | 内容增量 |
 | thinking_start | 开始推理过程（reasoner模型） |
 | thinking_delta | 推理内容增量 |
 | thinking_end | 结束推理过程 |
-| message_end | 结束生成消息 |
+| message_end | 结束生成消息，返回完整消息信息并保存到数据库 |
+| message_stopped | 消息被停止，保存已生成的内容 |
 | error | 错误信息 |
+
+**消息保存机制说明：**
+
+1. **用户消息**：在 `message_start` 事件前立即保存到数据库
+2. **AI消息**：
+   - 正常结束：`message_end` 事件时保存完整消息到数据库
+   - 用户停止：`message_stopped` 事件时保存已生成的内容到数据库
+   - 发生错误：`error` 事件时保存错误状态的消息到数据库
+3. **断线重连**：前端可通过获取消息列表接口恢复已保存的消息
+
+**SSE事件数据结构：**
+
+| 事件类型 | 字段名 | 类型 | 说明 |
+|---------|--------|------|------|
+| message_start | userMessageId | int | 用户消息ID |
+| | assistantMessageId | int | AI消息ID（临时） |
+| | conversationId | int | 会话ID |
+| content_delta | content | string | 增量内容 |
+| thinking_start | - | - | 无额外数据 |
+| thinking_delta | content | string | 推理增量内容 |
+| thinking_end | - | - | 无额外数据 |
+| message_end | messageId | int | AI消息ID（最终） |
+| | content | string | 完整消息内容 |
+| | thinkingContent | string | 推理过程内容（reasoner模型） |
+| | tokensUsed | int | 本次消息使用的token数 |
+| | totalTokens | int | 会话累计token数 |
+| message_stopped | messageId | int | AI消息ID |
+| | content | string | 已生成的消息内容 |
+| | stoppedAt | string | 停止时间 |
+| error | code | int | 错误码 |
+| | message | string | 错误信息 |
 
 **SSE事件示例：**
 ```
 event: message_start
-data: {"messageId":123}
+data: {"userMessageId":121,"assistantMessageId":123,"conversationId":1}
 
 event: content_delta
 data: {"content":"以下是"}
@@ -799,12 +831,24 @@ event: content_delta
 data: {"content":"快速排序"}
 
 event: message_end
-data: {"tokensUsed":300,"totalTokens":3500}
+data: {"messageId":123,"content":"以下是快速排序的完整实现...","tokensUsed":300,"totalTokens":3500}
+```
+
+**停止生成事件示例：**
+```
+event: message_stopped
+data: {"messageId":123,"content":"以下是快速排序的","stoppedAt":"2026-03-03 16:30:00"}
+```
+
+**错误事件示例：**
+```
+event: error
+data: {"code":1009,"message":"模型调用失败，请稍后重试"}
 ```
 
 #### 3.3.2 停止生成
 
-- **接口说明**：停止当前正在生成的消息
+- **接口说明**：停止当前正在生成的消息，已生成的内容会保存到数据库
 - **请求方式**：POST
 - **接口路径**：`/api/chat/messages/{messageId}/stop`
 - **权限要求**：`chat:message:stop`
@@ -820,12 +864,34 @@ data: {"tokensUsed":300,"totalTokens":3500}
 POST /api/chat/messages/123/stop
 ```
 
+**响应参数：**
+
+|| 参数名 | 类型 | 说明 |
+||--------|------|------|
+|| code | int | 状态码 |
+|| msg | string | 响应消息 |
+|| data | object | 已保存的消息信息 |
+
+**data字段说明：**
+
+|| 参数名 | 类型 | 说明 |
+||--------|------|------|
+|| messageId | int | AI消息ID |
+|| content | string | 已生成的消息内容 |
+|| tokensUsed | int | 已使用的token数 |
+|| stoppedAt | string | 停止时间 |
+
 **响应示例：**
 ```json
 {
   "code": 200,
   "msg": "已停止生成",
-  "data": null
+  "data": {
+    "messageId": 123,
+    "content": "以下是快速排序的",
+    "tokensUsed": 50,
+    "stoppedAt": "2026-03-03 16:30:00"
+  }
 }
 ```
 
@@ -852,7 +918,10 @@ POST /api/chat/messages/123/stop
 
 **响应说明：**
 
-返回 SSE 流（与发送消息相同）
+返回 SSE 流（与发送消息相同），消息保存机制如下：
+- 新的 AI 消息会保存到数据库
+- 旧的 AI 消息会被标记为已删除（软删除）
+- 用户消息保持不变
 
 #### 3.3.4 获取消息列表
 
@@ -1229,12 +1298,18 @@ GET /api/chat/model-presets
 - 发送首条消息后，自动将标题更新为首条消息的前20个字符
 - 用户可手动修改标题，修改后不再自动更新
 
-### 4.2 流式消息处理
+### 4.2 流式消息处理与保存机制
 
 - 使用 SSE (Server-Sent Events) 实现流式输出
+- **消息保存时机**：
+  - 用户消息：在 `message_start` 事件发送前立即保存到数据库
+  - AI消息：在 `message_end` 事件时保存完整消息到数据库
+  - 停止生成：在 `message_stopped` 事件时保存已生成的内容
+  - 发生错误：在 `error` 事件时保存错误状态的消息
 - 消息生成过程中，前端可随时停止生成
 - 停止后已生成内容保留，可重新生成或继续对话
 - reasoner 模型会先输出思考过程（thinking_content），再输出最终回复
+- **断线重连**：前端可通过获取消息列表接口恢复已保存的消息
 
 ### 4.3 上下文窗口管理
 

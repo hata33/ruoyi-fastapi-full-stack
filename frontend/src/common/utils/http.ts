@@ -6,8 +6,12 @@ import { getStorage } from ".";
  */
 export interface ApiResponse<T = any> {
   code: number;
-  data: T;
+  data?: T;
   msg: string;
+  rows?: T extends Array ? T : never;  // 分页数据时，rows 直接在顶层
+  total?: number;
+  pageNum?: number;
+  pageSize?: number;
 }
 
 // 创建 axios 实例

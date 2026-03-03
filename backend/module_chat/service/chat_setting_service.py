@@ -119,11 +119,13 @@ class ChatSettingService:
         :param model_id: 模型ID
         :return: 更新结果
         """
-        # 检查模型是否存在
+        # 检查模型是否存在（如果模型表有数据则校验，否则跳过校验）
         from module_chat.dao.chat_model_dao import ChatModelDao
         model_info = await ChatModelDao.get_model_by_code(query_db, model_id)
-        if not model_info or not model_info.is_enabled:
-            raise ServiceException(message='模型不可用')
+        if model_info:
+            if not model_info.is_enabled:
+                raise ServiceException(message='模型已禁用')
+        # 模型不存在时继续使用前端传的模型ID
 
         # 检查是否已存在设置
         existing_setting = await ChatSettingDao.get_setting_by_user(query_db, user_id)

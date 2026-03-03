@@ -3,7 +3,7 @@
  * 聊天模块状态管理
  */
 
-import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import type {
   Model,
   ModelConfig,
@@ -312,17 +312,28 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         // 加载模型列表
         const modelsRes = await chatApi.fetchModels(true);
-        if (modelsRes.code === 200) {
+        if (modelsRes.code === 200 && modelsRes.data) {
           dispatch({ type: 'SET_MODELS', payload: modelsRes.data });
           if (modelsRes.data.length > 0) {
             dispatch({
               type: 'SET_CURRENT_MODEL',
               payload: modelsRes.data[0].modelCode,
             });
+          } else {
+            // 如果没有启用的模型，设置默认模型
+            dispatch({
+              type: 'SET_CURRENT_MODEL',
+              payload: 'deepseek-chat',
+            });
           }
+        } else {
+          // 没有数据时设置默认模型
+          dispatch({ type: 'SET_CURRENT_MODEL', payload: 'deepseek-chat' });
         }
       } catch (error) {
         console.error('Failed to initialize chat:', error);
+        // 加载失败时设置默认模型
+        dispatch({ type: 'SET_CURRENT_MODEL', payload: 'deepseek-chat' });
       }
     };
 

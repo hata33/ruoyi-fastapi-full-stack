@@ -43,47 +43,47 @@ class ChatConversationService:
         """
         conversation_list_result = await ChatConversationDao.get_conversation_list(query_db, query_object, is_page)
 
-        # 处理tag_list字段
+        # 处理tagList字段（已被CamelCaseUtil转换为驼峰命名）
         if is_page and hasattr(conversation_list_result, 'rows'):
             for row in conversation_list_result.rows:
-                tag_list = row.get('tag_list') if isinstance(row, dict) else getattr(row, 'tag_list', None)
+                tag_list = row.get('tagList') if isinstance(row, dict) else getattr(row, 'tagList', None)
                 if tag_list:
                     try:
                         tag_list_parsed = json.loads(tag_list) if isinstance(tag_list, str) else tag_list
                         if isinstance(row, dict):
-                            row['tag_list'] = tag_list_parsed
+                            row['tagList'] = tag_list_parsed
                         else:
-                            row.tag_list = tag_list_parsed
+                            row.tagList = tag_list_parsed
                     except:
                         if isinstance(row, dict):
-                            row['tag_list'] = []
+                            row['tagList'] = []
                         else:
-                            row.tag_list = []
+                            row.tagList = []
                 else:
                     if isinstance(row, dict):
-                        row['tag_list'] = []
+                        row['tagList'] = []
                     else:
-                        row.tag_list = []
+                        row.tagList = []
         elif not is_page:
             for row in conversation_list_result:
-                tag_list = row.get('tag_list') if isinstance(row, dict) else getattr(row, 'tag_list', None)
+                tag_list = row.get('tagList') if isinstance(row, dict) else getattr(row, 'tagList', None)
                 if tag_list:
                     try:
                         tag_list_parsed = json.loads(tag_list) if isinstance(tag_list, str) else tag_list
                         if isinstance(row, dict):
-                            row['tag_list'] = tag_list_parsed
+                            row['tagList'] = tag_list_parsed
                         else:
-                            row.tag_list = tag_list_parsed
+                            row.tagList = tag_list_parsed
                     except:
                         if isinstance(row, dict):
-                            row['tag_list'] = []
+                            row['tagList'] = []
                         else:
-                            row.tag_list = []
+                            row.tagList = []
                 else:
                     if isinstance(row, dict):
-                        row['tag_list'] = []
+                        row['tagList'] = []
                     else:
-                        row.tag_list = []
+                        row.tagList = []
 
         return conversation_list_result
 
@@ -151,12 +151,8 @@ class ChatConversationService:
             add_conversation = await ChatConversationDao.add_conversation(query_db, conversation)
             await query_db.commit()
 
-            result = {
-                'conversation_id': add_conversation.conversation_id,
-                'title': add_conversation.title,
-                'model_id': add_conversation.model_id,
-                'create_time': add_conversation.create_time,
-            }
+            # 使用 CamelCaseUtil 转换为驼峰命名
+            result = CamelCaseUtil.transform_result(add_conversation)
             return CrudResponseModel(is_success=True, message='创建成功', result=result)
         except Exception as e:
             await query_db.rollback()

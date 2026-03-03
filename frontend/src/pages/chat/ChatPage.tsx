@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { MenuOutlined } from '@ant-design/icons';
 import { cn } from '@/utils/cn';
 import { ChatProvider } from './context/ChatContext';
@@ -15,7 +15,6 @@ import ChatArea from './components/ChatArea';
 
 const ChatPageContent: React.FC = () => {
   const { conversationId } = useParams<{ conversationId?: string }>();
-  const navigate = useNavigate();
   const { fetchConversations, setCurrentConversation } = useConversations();
   const { sidebarVisible, toggleSidebar, setSidebarVisible } = useChatUI();
 

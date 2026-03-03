@@ -3,7 +3,7 @@
  * 聊天模块自定义 Hooks
  */
 
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { useChatContext } from '../context/ChatContext';
 import * as chatApi from '../services/chatApi';
 import type {
@@ -12,10 +12,7 @@ import type {
   SendMessageRequest,
   SSEEvent,
   Message,
-  Tag,
-  UserSettings,
   ModelConfig,
-  ChatFile,
   Conversation,
 } from '../types';
 
@@ -35,7 +32,9 @@ export const useConversations = () => {
     try {
       const res = await chatApi.fetchConversations(params);
       if (res.code === 200) {
-        dispatch({ type: 'SET_CONVERSATIONS', payload: res.data.rows });
+        // 后端返回的分页数据，rows 直接在顶层而非 data 中
+        const conversations = res.rows || res.data?.rows || [];
+        dispatch({ type: 'SET_CONVERSATIONS', payload: conversations });
       } else {
         dispatch({ type: 'SET_CONVERSATIONS_ERROR', payload: res.msg });
       }
@@ -48,29 +47,34 @@ export const useConversations = () => {
 
   /** 创建会话 */
   const createConversation = useCallback(async (data: CreateConversationRequest): Promise<Conversation | null> => {
-    try {
-      const res = await chatApi.createConversation(data);
-      if (res.code === 200) {
-        dispatch({ type: 'ADD_CONVERSATION', payload: res.data });
-        return res.data;
-      }
-      throw new Error(res.msg);
-    } catch (error: any) {
-      throw error;
+    const res = await chatApi.createConversation(data);
+    if (res.code === 200 && res.data) {
+      // 处理字段名映射：后端可能返回下划线命名，转换为驼峰命名
+      const conversation: Conversation = {
+        conversationId: res.data.conversationId || res.data.conversation_id,
+        title: res.data.title,
+        modelId: res.data.modelId || res.data.model_id,
+        isPinned: res.data.isPinned || res.data.is_pinned || false,
+        tagList: res.data.tagList || res.data.tag_list || [],
+        totalTokens: res.data.totalTokens || res.data.total_tokens || 0,
+        messageCount: res.data.messageCount || res.data.message_count || 0,
+        createTime: res.data.createTime || res.data.create_time,
+        updateTime: res.data.updateTime || res.data.update_time,
+      };
+      dispatch({ type: 'ADD_CONVERSATION', payload: conversation });
+      return conversation;
     }
+    return null;
   }, [dispatch]);
 
   /** 更新会话 */
   const updateConversation = useCallback(async (data: UpdateConversationRequest) => {
-    try {
-      const res = await chatApi.updateConversation(data);
-      if (res.code === 200) {
-        await fetchConversations();
-      }
-      return res.data;
-    } catch (error: any) {
-      throw error;
+
+    const res = await chatApi.updateConversation(data);
+    if (res.code === 200) {
+      await fetchConversations();
     }
+    return res.data;
   }, [dispatch, fetchConversations]);
 
   /** 删除会话 */
@@ -149,14 +153,16 @@ export const useMessages = () => {
 
   /** 发送消息（流式） */
   const sendMessage = useCallback(async (data: SendMessageRequest, onEvent?: (event: SSEEvent) => void) => {
-    if (!currentConversationId) {
+    // 优先使用传入的 conversationId（注意：0 是有效的 falsy 值），否则使用 context 中的 currentConversationId
+    const targetConversationId = data.conversationId != null ? data.conversationId : currentConversationId;
+    if (!targetConversationId) {
       throw new Error('No current conversation');
     }
 
     // 先添加用户消息
     const userMessage: Message = {
       messageId: Date.now(), // 临时 ID
-      conversationId: currentConversationId,
+      conversationId: targetConversationId,
       role: 'user',
       content: data.content,
       attachments: data.attachments?.map(a => ({ fileId: a.fileId, fileName: '', fileType: 'txt', fileSize: 0, filePath: '' })) || [],
@@ -165,12 +171,12 @@ export const useMessages = () => {
     };
     dispatch({
       type: 'ADD_MESSAGE',
-      payload: { conversationId: currentConversationId, message: userMessage },
+      payload: { conversationId: targetConversationId, message: userMessage },
     });
 
     // 发起流式请求
     const cancelStream = chatApi.sendMessageStream(
-      { ...data, conversationId: currentConversationId },
+      { ...data, conversationId: targetConversationId },
       (event) => {
         // 处理 SSE 事件
         switch (event.type) {
@@ -179,7 +185,7 @@ export const useMessages = () => {
               type: 'SET_STREAMING_MESSAGE',
               payload: {
                 messageId: event.data.messageId,
-                conversationId: currentConversationId!,
+                conversationId: targetConversationId,
                 role: 'assistant',
                 content: '',
                 attachments: [],
@@ -212,7 +218,7 @@ export const useMessages = () => {
             break;
 
           case 'message_end':
-            if (streamingMessage && currentConversationId) {
+            if (streamingMessage && targetConversationId) {
               const completedMessage: Message = {
                 ...streamingMessage,
                 content: streamingMessage.content,
@@ -221,7 +227,7 @@ export const useMessages = () => {
               };
               dispatch({
                 type: 'ADD_MESSAGE',
-                payload: { conversationId: currentConversationId, message: completedMessage },
+                payload: { conversationId: targetConversationId, message: completedMessage },
               });
             }
             dispatch({ type: 'SET_STREAMING_MESSAGE', payload: null });

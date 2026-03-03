@@ -50,6 +50,9 @@ async def send_message_stream(
         query_db, send_message, current_user.user.user_id
     )
 
+    # 生成临时 AI 消息 ID
+    assistant_message_id = int(f"{user_message_id}_temp")
+
     async def generate_stream():
         """生成流式响应"""
         try:
@@ -64,12 +67,13 @@ async def send_message_stream(
                 current_user.user.user_id
             )
 
-            # 发送message_start事件
-            yield f"event: message_start\ndata: {json.dumps({'messageId': user_message_id})}\n\n"
+            # 发送 message_start 事件（包含完整的消息 ID 信息）
+            yield f"event: message_start\ndata: {json.dumps({'userMessageId': user_message_id, 'assistantMessageId': assistant_message_id, 'conversationId': send_message.conversation_id})}\n\n"
 
             # 准备响应内容
             response_content = ""
             thinking_content = ""
+            final_message_id = None
 
             # 调用 DeepSeek API
             async for event in deepseek_client.chat_stream(
@@ -98,7 +102,7 @@ async def send_message_stream(
 
                 elif event_type == "message_end":
                     # 创建助手消息记录
-                    await ChatMessageService.create_assistant_message_services(
+                    final_message_id = await ChatMessageService.create_assistant_message_services(
                         query_db,
                         send_message.conversation_id,
                         response_content,
@@ -106,13 +110,13 @@ async def send_message_stream(
                         event_data.get("tokens_used", 0),
                     )
 
-                    # 发送结束事件
-                    yield f"event: message_end\ndata: {json.dumps({**event_data})}\n\n"
+                    # 发送结束事件（包含完整消息信息）
+                    yield f"event: message_end\ndata: {json.dumps({'messageId': final_message_id, 'content': response_content, 'thinkingContent': thinking_content if thinking_content else None, 'tokensUsed': event_data.get('tokens_used', 0), 'totalTokens': event_data.get('total_tokens', 0)})}\n\n"
                     break
 
         except Exception as e:
             logger.error(f'流式生成失败: {str(e)}')
-            yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+            yield f"event: error\ndata: {json.dumps({'code': 1009, 'message': str(e)})}\n\n"
 
     return StreamingResponse(generate_stream(), media_type="text/event-stream")
 
@@ -131,13 +135,23 @@ async def stop_generation(
     """
     停止生成
 
-    :param message_id: 消息ID
-    :return: 操作结果
+    :param message_id: AI消息ID
+    :return: 操作结果（包含已保存的消息信息）
     """
+    from datetime import datetime
+
     stop_result = await ChatMessageService.stop_generation_services(query_db, message_id, current_user.user.user_id)
     logger.info(stop_result.message)
 
-    return ResponseUtil.success(msg=stop_result.message)
+    return ResponseUtil.success(
+        data={
+            'messageId': message_id,
+            'content': stop_result.data.get('content', '') if hasattr(stop_result, 'data') and stop_result.data else '',
+            'tokensUsed': stop_result.data.get('tokens_used', 0) if hasattr(stop_result, 'data') and stop_result.data else 0,
+            'stoppedAt': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        },
+        msg=stop_result.message
+    )
 
 
 @chatMessageController.post(
@@ -163,18 +177,22 @@ async def regenerate_message(
         query_db, message_id, regenerate_message, current_user.user.user_id
     )
 
+    # 生成临时 AI 消息 ID
+    assistant_message_id = int(f"{user_message_id}_temp")
+
     async def generate_regenerate_stream():
         """生成重新生成的流式响应"""
         try:
             # 获取 DeepSeek 客户端
             deepseek_client = get_deepseek_client()
 
-            # 发送message_start事件
-            yield f"event: message_start\ndata: {json.dumps({'messageId': user_message_id})}\n\n"
+            # 发送 message_start 事件（包含完整的消息 ID 信息）
+            yield f"event: message_start\ndata: {json.dumps({'userMessageId': user_message_id, 'assistantMessageId': assistant_message_id, 'conversationId': conversation_id})}\n\n"
 
             # 准备响应内容
             response_content = ""
             thinking_content = ""
+            final_message_id = None
 
             # 调用 DeepSeek API
             async for event in deepseek_client.chat_stream(
@@ -203,7 +221,7 @@ async def regenerate_message(
 
                 elif event_type == "message_end":
                     # 创建助手消息记录（注意：这里需要替换之前的助手消息）
-                    await ChatMessageService.replace_assistant_message_services(
+                    final_message_id = await ChatMessageService.replace_assistant_message_services(
                         query_db,
                         conversation_id,
                         response_content,
@@ -211,12 +229,12 @@ async def regenerate_message(
                         event_data.get("tokens_used", 0),
                     )
 
-                    # 发送结束事件
-                    yield f"event: message_end\ndata: {json.dumps({**event_data})}\n\n"
+                    # 发送结束事件（包含完整消息信息）
+                    yield f"event: message_end\ndata: {json.dumps({'messageId': final_message_id, 'content': response_content, 'thinkingContent': thinking_content if thinking_content else None, 'tokensUsed': event_data.get('tokens_used', 0), 'totalTokens': event_data.get('total_tokens', 0)})}\n\n"
                     break
 
         except Exception as e:
             logger.error(f'重新生成失败: {str(e)}')
-            yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+            yield f"event: error\ndata: {json.dumps({'code': 1009, 'message': str(e)})}\n\n"
 
     return StreamingResponse(generate_regenerate_stream(), media_type="text/event-stream")

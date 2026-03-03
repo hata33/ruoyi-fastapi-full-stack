@@ -17,7 +17,7 @@ from module_admin.annotation.log_annotation import Log
 from module_admin.aspect.interface_auth import CheckUserInterfaceAuth
 from module_admin.entity.vo.user_vo import CurrentUserModel
 from module_admin.service.login_service import LoginService
-from module_chat.entity.vo.chat_model_vo import ChatUserModelConfigModel
+from module_chat.entity.vo.chat_model_vo import ChatUserModelConfigModel, ChatModelModel
 from module_chat.service.chat_model_service import ChatModelService
 from utils.log_util import logger
 from utils.response_util import ResponseUtil
@@ -113,3 +113,47 @@ async def get_model_presets(
     logger.info('获取成功')
 
     return ResponseUtil.success(data=presets_result)
+
+
+@chatModelController.post(
+    '',
+    dependencies=[Depends(CheckUserInterfaceAuth('chat:model:add'))],
+)
+@Log(title='模型管理', business_type=BusinessType.INSERT)
+async def add_model(
+    request: Request,
+    add_model: ChatModelModel,
+    query_db: AsyncSession = Depends(get_db),
+):
+    """
+    新增模型
+
+    :param add_model: 模型对象
+    :return: 操作结果
+    """
+    add_model_result = await ChatModelService.add_model_services(query_db, add_model)
+    logger.info(add_model_result.message)
+
+    return ResponseUtil.success(msg=add_model_result.message, data=add_model_result.result)
+
+
+@chatModelController.put(
+    '',
+    dependencies=[Depends(CheckUserInterfaceAuth('chat:model:edit'))],
+)
+@Log(title='模型管理', business_type=BusinessType.UPDATE)
+async def update_model(
+    request: Request,
+    update_model: ChatModelModel,
+    query_db: AsyncSession = Depends(get_db),
+):
+    """
+    更新模型
+
+    :param update_model: 模型对象
+    :return: 操作结果
+    """
+    update_model_result = await ChatModelService.update_model_services(query_db, update_model)
+    logger.info(update_model_result.message)
+
+    return ResponseUtil.success(msg=update_model_result.message)

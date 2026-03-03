@@ -149,3 +149,76 @@ class ChatModelService:
         """
         model_list_result = await ChatModelDao.get_all_enabled_models(query_db)
         return CamelCaseUtil.transform_result(model_list_result)
+
+    @classmethod
+    async def add_model_services(cls, query_db: AsyncSession, page_object):
+        """
+        新增模型service
+
+        :param query_db: orm对象
+        :param page_object: 模型对象
+        :return: 新增结果
+        """
+        from module_chat.entity.do.chat_model_do import ChatModel
+
+        # 检查模型代码是否已存在
+        existing_model = await ChatModelDao.get_model_by_code(query_db, page_object.model_code)
+        if existing_model:
+            raise ServiceException(message='模型代码已存在')
+
+        try:
+            new_model = ChatModel(
+                model_code=page_object.model_code,
+                model_name=page_object.model_name,
+                model_type=page_object.model_type or 'chat',
+                max_tokens=page_object.max_tokens or 4096,
+                is_enabled=page_object.is_enabled if page_object.is_enabled is not None else True,
+                sort_order=page_object.sort_order or 0,
+                create_time=datetime.now(),
+                update_time=datetime.now(),
+            )
+            added_model = await ChatModelDao.add_model(query_db, new_model)
+            await query_db.commit()
+
+            return CrudResponseModel(
+                is_success=True,
+                message='新增成功',
+                result=CamelCaseUtil.transform_result(added_model)
+            )
+        except Exception as e:
+            await query_db.rollback()
+            raise e
+
+    @classmethod
+    async def update_model_services(cls, query_db: AsyncSession, page_object):
+        """
+        更新模型service
+
+        :param query_db: orm对象
+        :param page_object: 模型对象
+        :return: 更新结果
+        """
+        # 检查模型是否存在
+        existing_model = await ChatModelDao.get_model_by_code(query_db, page_object.model_code)
+        if not existing_model:
+            raise ServiceException(message='模型不存在')
+
+        try:
+            update_data = {
+                'model_name': page_object.model_name,
+                'model_type': page_object.model_type,
+                'max_tokens': page_object.max_tokens,
+                'is_enabled': page_object.is_enabled,
+                'sort_order': page_object.sort_order,
+                'update_time': datetime.now(),
+            }
+            # 过滤掉 None 值
+            update_data = {k: v for k, v in update_data.items() if v is not None}
+
+            await ChatModelDao.update_model(query_db, page_object.model_code, update_data)
+            await query_db.commit()
+
+            return CrudResponseModel(is_success=True, message='更新成功')
+        except Exception as e:
+            await query_db.rollback()
+            raise e

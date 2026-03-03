@@ -130,3 +130,30 @@ class ChatModelDao:
             )
         ).scalars().all()
         return model_list
+
+    @classmethod
+    async def add_model(cls, db: AsyncSession, model: ChatModel):
+        """
+        新增模型
+
+        :param db: orm对象
+        :param model: 模型对象
+        :return: 新增的模型对象
+        """
+        db.add(model)
+        await db.flush()
+        return model
+
+    @classmethod
+    async def update_model(cls, db: AsyncSession, model_code: str, update_data: dict):
+        """
+        更新模型
+
+        :param db: orm对象
+        :param model_code: 模型代码
+        :param update_data: 更新数据字典
+        :return: 更新结果
+        """
+        await db.execute(
+            update(ChatModel).where(ChatModel.model_code == model_code), [update_data]
+        )

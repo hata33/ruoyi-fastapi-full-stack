@@ -92,11 +92,11 @@ const ConversationItem: React.FC<ConversationItemProps> = ({ conversation, isAct
           </div>
 
           {/* Tags */}
-          {conversation.tagList.length > 0 && (
+          {Array.isArray(conversation.tagList) && conversation.tagList.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1.5">
-              {conversation.tagList.slice(0, 2).map((tag, index) => (
+              {conversation.tagList.slice(0, 2).map((tag) => (
                 <span
-                  key={index}
+                  key={tag}
                   className={cn(
                     'inline-flex items-center px-2 py-0.5 rounded',
                     'bg-gray-200 dark:bg-gray-700',
