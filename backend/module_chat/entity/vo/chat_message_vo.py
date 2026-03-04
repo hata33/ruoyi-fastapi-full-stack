@@ -25,10 +25,8 @@ class ChatMessageModel(BaseModel):
     content: Optional[str] = Field(default=None, description='消息内容')
     thinking_content: Optional[str] = Field(default=None, description='推理过程内容')
     tokens_used: Optional[int] = Field(default=None, description='使用的token数')
-    attachments: Optional[List[int]] = Field(default=None, description='附件ID列表')
-    user_id: Optional[int] = Field(default=None, description='用户ID')
+    attachments: Optional[List[int]] = Field(default_factory=list, description='附件ID列表')
     create_time: Optional[datetime] = Field(default=None, description='创建时间')
-    update_time: Optional[datetime] = Field(default=None, description='更新时间')
 
     @NotBlank(field_name='content', message='消息内容不能为空')
     def get_content(self):

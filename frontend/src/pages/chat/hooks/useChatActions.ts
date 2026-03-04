@@ -78,7 +78,7 @@ export const useConversations = () => {
   }, [dispatch, fetchConversations]);
 
   /** 删除会话 */
-  const deleteConversations = useCallback(async (conversationIds: number[]) => {
+  const deleteConversations = useCallback(async (conversationIds: string[]) => {
     try {
       const res = await chatApi.deleteConversation(conversationIds);
       if (res.code === 200) {
@@ -91,7 +91,7 @@ export const useConversations = () => {
   }, [dispatch]);
 
   /** 切换置顶 */
-  const togglePin = useCallback(async (conversationId: number, isPinned: boolean) => {
+  const togglePin = useCallback(async (conversationId: string, isPinned: boolean) => {
     try {
       const res = await chatApi.toggleConversationPin(conversationId, isPinned);
       if (res.code === 200) {
@@ -104,7 +104,7 @@ export const useConversations = () => {
   }, [dispatch, fetchConversations]);
 
   /** 设置当前会话 */
-  const setCurrentConversation = useCallback((conversationId: number | null) => {
+  const setCurrentConversation = useCallback((conversationId: string | null) => {
     dispatch({ type: 'SET_CURRENT_CONVERSATION', payload: conversationId });
   }, [dispatch]);
 
@@ -129,7 +129,7 @@ export const useMessages = () => {
   const { dispatch, currentConversationId, streamingMessage, isStreaming } = useChatContext();
 
   /** 获取消息列表 */
-  const fetchMessages = useCallback(async (conversationId: number, beforeMessageId?: number) => {
+  const fetchMessages = useCallback(async (conversationId: string, beforeMessageId?: string) => {
     dispatch({ type: 'SET_MESSAGES_LOADING', payload: { conversationId, loading: true } });
 
     try {
@@ -153,15 +153,18 @@ export const useMessages = () => {
 
   /** 发送消息（流式） */
   const sendMessage = useCallback(async (data: SendMessageRequest, onEvent?: (event: SSEEvent) => void) => {
-    // 优先使用传入的 conversationId（注意：0 是有效的 falsy 值），否则使用 context 中的 currentConversationId
-    const targetConversationId = data.conversationId != null ? data.conversationId : currentConversationId;
+    // 优先使用传入的 conversationId，否则使用 context 中的 currentConversationId
+    const targetConversationId = data.conversationId || currentConversationId;
     if (!targetConversationId) {
       throw new Error('No current conversation');
     }
 
+    // 生成临时 UUID（用于前端显示，实际ID由后端返回）
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
     // 先添加用户消息
     const userMessage: Message = {
-      messageId: Date.now(), // 临时 ID
+      messageId: tempId,
       conversationId: targetConversationId,
       role: 'user',
       content: data.content,
@@ -173,7 +176,6 @@ export const useMessages = () => {
         fileSize: 0,
         filePath: ''
       })) || [],
-      userId: 0,
       createTime: new Date().toISOString(),
     };
     dispatch({
@@ -188,6 +190,16 @@ export const useMessages = () => {
         // 处理 SSE 事件
         switch (event.type) {
           case 'message_start':
+            // 更新临时用户消息ID为后端返回的实际ID
+            dispatch({
+              type: 'UPDATE_MESSAGE_ID',
+              payload: {
+                conversationId: targetConversationId,
+                oldMessageId: tempId,
+                newMessageId: event.data.userMessageId,
+              },
+            });
+            // 设置流式AI消息
             dispatch({
               type: 'SET_STREAMING_MESSAGE',
               payload: {
@@ -196,7 +208,6 @@ export const useMessages = () => {
                 role: 'assistant',
                 content: '',
                 attachments: [],
-                userId: 0,
                 createTime: new Date().toISOString(),
                 isStreaming: true,
               } as Message,
@@ -282,7 +293,7 @@ export const useMessages = () => {
   }, [streamingMessage, dispatch]);
 
   /** 重新生成 */
-  const regenerate = useCallback(async (messageId: number, modelId?: string) => {
+  const regenerate = useCallback(async (messageId: string, modelId?: string) => {
     const cancelStream = chatApi.regenerateMessageStream(
       messageId,
       modelId,
@@ -298,7 +309,6 @@ export const useMessages = () => {
                 role: 'assistant',
                 content: '',
                 attachments: [],
-                userId: 0,
                 createTime: new Date().toISOString(),
                 isStreaming: true,
               } as Message,
@@ -387,7 +397,7 @@ export const useTags = () => {
   }, [dispatch]);
 
   /** 删除标签 */
-  const deleteTags = useCallback(async (tagIds: number[]) => {
+  const deleteTags = useCallback(async (tagIds: string[]) => {
     try {
       const res = await chatApi.deleteTag(tagIds);
       if (res.code === 200) {

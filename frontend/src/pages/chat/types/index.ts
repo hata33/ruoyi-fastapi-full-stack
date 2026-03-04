@@ -65,7 +65,7 @@ export interface Tag {
 
 /** 会话 */
 export interface Conversation {
-  conversationId: number;
+  conversationId: string;
   title: string;
   modelId: string;
   isPinned: boolean;
@@ -86,7 +86,7 @@ export interface CreateConversationRequest {
 
 /** 更新会话请求 */
 export interface UpdateConversationRequest {
-  conversationId: number;
+  conversationId: string;
   title?: string;
   modelId?: string;
   tagList?: string[];
@@ -110,14 +110,13 @@ export interface Attachment {
 
 /** 消息 */
 export interface Message {
-  messageId: number;
-  conversationId: number;
+  messageId: string;
+  conversationId: string;
   role: MessageRole;
   content: string;
   thinkingContent?: string;
   tokensUsed?: number;
   attachments: Attachment[];
-  userId: number;
   createTime: string;
   isStreaming?: boolean;
   hasError?: boolean;
@@ -125,7 +124,7 @@ export interface Message {
 
 /** 发送消息请求 */
 export interface SendMessageRequest {
-  conversationId: number;
+  conversationId: string;
   content: string;
   modelId?: string;
   enableSearch?: boolean;
@@ -154,9 +153,9 @@ export interface SSEEvent {
 
 /** message_start 事件数据 */
 export interface MessageStartData {
-  userMessageId: number;
-  assistantMessageId: number;
-  conversationId: number;
+  userMessageId: string;
+  assistantMessageId: string;
+  conversationId: string;
 }
 
 /** 注意：后端返回的是 assistantMessageId 而非 messageId
@@ -175,7 +174,7 @@ export interface ThinkingDeltaData {
 
 /** message_end 事件数据 */
 export interface MessageEndData {
-  messageId: number;
+  messageId: string;
   content: string;
   thinkingContent?: string;
   tokensUsed: number;
@@ -184,7 +183,7 @@ export interface MessageEndData {
 
 /** message_stopped 事件数据 */
 export interface MessageStoppedData {
-  messageId: number;
+  messageId: string;
   content: string;
   stoppedAt: string;
 }

@@ -24,13 +24,15 @@ const ChatArea: React.FC<ChatAreaProps> = ({ className }) => {
   const { createConversation, setCurrentConversation } = useConversations();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [hasLoadedMessages, setHasLoadedMessages] = React.useState<Record<string, boolean>>({});
 
-  // 加载当前会话的消息
+  // 加载当前会话的消息（仅在首次加载时）
   useEffect(() => {
-    if (currentConversationId) {
+    if (currentConversationId && !hasLoadedMessages[currentConversationId]) {
       fetchMessages(currentConversationId);
+      setHasLoadedMessages(prev => ({ ...prev, [currentConversationId]: true }));
     }
-  }, [currentConversationId, fetchMessages]);
+  }, [currentConversationId, fetchMessages, hasLoadedMessages]);
 
   // 自动滚动到底部
   useEffect(() => {
@@ -73,11 +75,10 @@ const ChatArea: React.FC<ChatAreaProps> = ({ className }) => {
   // 处理建议卡片点击（发送预设消息）
   const handleSuggestionClick = useCallback(async (message: string) => {
     await handleSendMessage({
-      conversationId: currentConversationId || 0,
       content: message,
       modelId: currentModelId,
     });
-  }, [handleSendMessage, currentConversationId, currentModelId]);
+  }, [handleSendMessage, currentModelId]);
 
   // 当前会话的消息列表
   const currentMessages = currentConversationId

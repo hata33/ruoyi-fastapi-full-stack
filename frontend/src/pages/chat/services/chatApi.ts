@@ -82,7 +82,7 @@ export const fetchConversations = async (params?: {
 /**
  * 获取会话详情
  */
-export const fetchConversationDetail = async (conversationId: number): Promise<ApiResponse<ConversationDetail>> => {
+export const fetchConversationDetail = async (conversationId: string): Promise<ApiResponse<ConversationDetail>> => {
   return http.get(
     `/api/chat/conversations/${conversationId}`,
   );
@@ -105,7 +105,7 @@ export const updateConversation = async (data: UpdateConversationRequest): Promi
 /**
  * 删除会话
  */
-export const deleteConversation = async (conversationIds: (number | string)[]): Promise<ApiResponse<{ msg: string }>> => {
+export const deleteConversation = async (conversationIds: string[]): Promise<ApiResponse<{ msg: string }>> => {
   return http.delete(
     `/api/chat/conversations/${conversationIds.join(',')}`,
   );
@@ -115,7 +115,7 @@ export const deleteConversation = async (conversationIds: (number | string)[]): 
  * 置顶/取消置顶会话
  */
 export const toggleConversationPin = async (
-  conversationId: number,
+  conversationId: string,
   isPinned: boolean,
 ): Promise<ApiResponse<{ msg: string }>> => {
   return http.put(
@@ -128,7 +128,7 @@ export const toggleConversationPin = async (
  * 导出会话
  */
 export const exportConversation = async (
-  conversationId: number,
+  conversationId: string,
   format: 'markdown' | 'pdf' | 'txt',
 ): Promise<ApiResponse<{ downloadUrl: string; fileName: string; fileSize: number }>> => {
   return http.get(
@@ -140,7 +140,7 @@ export const exportConversation = async (
 /**
  * 获取会话上下文状态
  */
-export const fetchConversationContext = async (conversationId: number): Promise<ApiResponse<ContextStatus>> => {
+export const fetchConversationContext = async (conversationId: string): Promise<ApiResponse<ContextStatus>> => {
   return http.get(
     `/api/chat/conversations/${conversationId}/context`,
   );
@@ -165,7 +165,7 @@ export const createTag = async (tagName: string, tagColor?: string): Promise<Api
 /**
  * 删除标签
  */
-export const deleteTag = async (tagIds: (number | string)[]): Promise<ApiResponse<{ msg: string }>> => {
+export const deleteTag = async (tagIds: string[]): Promise<ApiResponse<{ msg: string }>> => {
   return http.delete(`/api/chat/tags/${tagIds.join(',')}`);
 };
 
@@ -175,8 +175,8 @@ export const deleteTag = async (tagIds: (number | string)[]): Promise<ApiRespons
  * 获取消息列表
  */
 export const fetchMessages = async (
-  conversationId: number,
-  beforeMessageId?: number,
+  conversationId: string,
+  beforeMessageId?: string,
   pageSize = 50,
 ): Promise<ApiResponse<PaginatedResponse<Message> & { hasMore: boolean }>> => {
   return http.get(`/api/chat/conversations/${conversationId}/messages`, {
@@ -215,7 +215,7 @@ export const sendMessageStream = (
 /**
  * 停止生成消息
  */
-export const stopMessageGeneration = async (messageId: number): Promise<ApiResponse<{ msg: string }>> => {
+export const stopMessageGeneration = async (messageId: string): Promise<ApiResponse<{ msg: string }>> => {
   return http.post(`/api/chat/messages/${messageId}/stop`);
 };
 
@@ -230,7 +230,7 @@ export const stopMessageGeneration = async (messageId: number): Promise<ApiRespo
  * @returns 取消请求的函数
  */
 export const regenerateMessageStream = (
-  messageId: number,
+  messageId: string,
   modelId: string | undefined,
   onEvent: (event: SSEEvent) => void,
   onError?: (error: Error) => void,
@@ -254,11 +254,11 @@ export const regenerateMessageStream = (
 /**
  * 上传文件
  */
-export const uploadFile = async (file: File, conversationId?: number): Promise<ApiResponse<ChatFile>> => {
+export const uploadFile = async (file: File, conversationId?: string): Promise<ApiResponse<ChatFile>> => {
   const formData = new FormData();
   formData.append('file', file);
   if (conversationId) {
-    formData.append('conversationId', conversationId.toString());
+    formData.append('conversationId', conversationId);
   }
 
   return http.post('/api/chat/files/upload', formData, {
@@ -273,7 +273,7 @@ export const uploadFile = async (file: File, conversationId?: number): Promise<A
  */
 export const fetchFiles = async (params?: {
   fileType?: string;
-  conversationId?: number;
+  conversationId?: string;
   pageNum?: number;
   pageSize?: number;
 }): Promise<ApiResponse<PaginatedResponse<ChatFile>>> => {
@@ -285,7 +285,7 @@ export const fetchFiles = async (params?: {
 /**
  * 删除文件
  */
-export const deleteFile = async (fileIds: (number | string)[]): Promise<ApiResponse<{ msg: string }>> => {
+export const deleteFile = async (fileIds: string[]): Promise<ApiResponse<{ msg: string }>> => {
   return http.delete(`/api/chat/files/${fileIds.join(',')}`);
 };
 

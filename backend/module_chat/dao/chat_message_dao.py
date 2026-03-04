@@ -52,7 +52,7 @@ class ChatMessageDao:
             # 对于UUID，使用字符串比较
             query = query.where(ChatMessage.message_id < before_message_id)
 
-        query = query.order_by(ChatMessage.message_id.desc()).limit(page_size)
+        query = query.order_by(ChatMessage.create_time.desc()).limit(page_size)
 
         message_list = (await db.execute(query)).scalars().all()
         # 返回时按时间正序
@@ -71,7 +71,7 @@ class ChatMessageDao:
             await db.execute(
                 select(ChatMessage)
                 .where(ChatMessage.conversation_id == conversation_id)
-                .order_by(ChatMessage.message_id)
+                .order_by(ChatMessage.create_time)
             )
         ).scalars().all()
         return message_list
@@ -90,7 +90,7 @@ class ChatMessageDao:
             await db.execute(
                 select(ChatMessage)
                 .where(ChatMessage.conversation_id == conversation_id)
-                .order_by(ChatMessage.message_id.desc())
+                .order_by(ChatMessage.create_time.desc())
                 .limit(limit)
             )
         ).scalars().all()
@@ -203,7 +203,7 @@ class ChatMessageDao:
             await db.execute(
                 select(ChatMessage)
                 .where(ChatMessage.conversation_id == conversation_id)
-                .order_by(ChatMessage.message_id.desc())
+                .order_by(ChatMessage.create_time.desc())
                 .limit(1)
             )
         ).scalars().first()
@@ -237,7 +237,7 @@ class ChatMessageDao:
                     ChatMessage.conversation_id == conversation_id,
                     ChatMessage.message_id < before_message_id
                 )
-                .order_by(ChatMessage.message_id.asc())
+                .order_by(ChatMessage.create_time.asc())
             )
         ).scalars().all()
         return messages

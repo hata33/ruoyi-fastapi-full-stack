@@ -27,14 +27,14 @@ interface ChatState {
 
   // 会话相关
   conversations: Conversation[];
-  currentConversationId: number | null;
+  currentConversationId: string | null;
   currentConversation: ConversationDetail | null;
   conversationsLoading: boolean;
   conversationsError: string | null;
 
   // 消息相关
-  messages: Record<number, Message[]>;
-  messagesLoading: Record<number, boolean>;
+  messages: Record<string, Message[]>;
+  messagesLoading: Record<string, boolean>;
   streamingMessage: Message | null;
   isStreaming: boolean;
 
@@ -65,18 +65,19 @@ type ChatAction =
   | { type: 'SET_CONVERSATIONS'; payload: Conversation[] }
   | { type: 'ADD_CONVERSATION'; payload: Conversation }
   | { type: 'UPDATE_CONVERSATION'; payload: Conversation }
-  | { type: 'REMOVE_CONVERSATION'; payload: number[] }
-  | { type: 'SET_CURRENT_CONVERSATION'; payload: number | null }
+  | { type: 'REMOVE_CONVERSATION'; payload: string[] }
+  | { type: 'SET_CURRENT_CONVERSATION'; payload: string | null }
   | { type: 'SET_CURRENT_CONVERSATION_DETAIL'; payload: ConversationDetail | null }
   | { type: 'SET_CONVERSATIONS_LOADING'; payload: boolean }
   | { type: 'SET_CONVERSATIONS_ERROR'; payload: string | null }
 
   // 消息相关
-  | { type: 'SET_MESSAGES'; payload: { conversationId: number; messages: Message[] } }
-  | { type: 'ADD_MESSAGE'; payload: { conversationId: number; message: Message } }
-  | { type: 'UPDATE_MESSAGE'; payload: { conversationId: number; message: Message } }
-  | { type: 'REMOVE_MESSAGE'; payload: { conversationId: number; messageId: number } }
-  | { type: 'SET_MESSAGES_LOADING'; payload: { conversationId: number; loading: boolean } }
+  | { type: 'SET_MESSAGES'; payload: { conversationId: string; messages: Message[] } }
+  | { type: 'ADD_MESSAGE'; payload: { conversationId: string; message: Message } }
+  | { type: 'UPDATE_MESSAGE'; payload: { conversationId: string; message: Message } }
+  | { type: 'UPDATE_MESSAGE_ID'; payload: { conversationId: string; oldMessageId: string; newMessageId: string } }
+  | { type: 'REMOVE_MESSAGE'; payload: { conversationId: string; messageId: string } }
+  | { type: 'SET_MESSAGES_LOADING'; payload: { conversationId: string; loading: boolean } }
   | { type: 'SET_STREAMING_MESSAGE'; payload: Message | null }
   | { type: 'SET_IS_STREAMING'; payload: boolean }
   | { type: 'APPEND_STREAMING_CONTENT'; payload: string }
@@ -85,12 +86,12 @@ type ChatAction =
   // 标签相关
   | { type: 'SET_TAGS'; payload: Tag[] }
   | { type: 'ADD_TAG'; payload: Tag }
-  | { type: 'REMOVE_TAG'; payload: number[] }
+  | { type: 'REMOVE_TAG'; payload: string[] }
 
   // 文件相关
   | { type: 'SET_FILES'; payload: ChatFile[] }
   | { type: 'ADD_FILE'; payload: ChatFile }
-  | { type: 'REMOVE_FILE'; payload: number[] }
+  | { type: 'REMOVE_FILE'; payload: string[] }
 
   // 用户设置
   | { type: 'SET_USER_SETTINGS'; payload: UserSettings | null }
@@ -156,7 +157,7 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
       return {
         ...state,
         conversations: state.conversations.filter(
-          (c) => !action.payload.includes(c.conversationId),
+          (c) => !action.payload.includes(String(c.conversationId)),
         ),
       };
     case 'SET_CURRENT_CONVERSATION':
@@ -198,6 +199,20 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
           ).map((m) =>
             m.messageId === action.payload.message.messageId
               ? action.payload.message
+              : m,
+          ),
+        },
+      };
+    case 'UPDATE_MESSAGE_ID':
+      return {
+        ...state,
+        messages: {
+          ...state.messages,
+          [action.payload.conversationId]: (
+            state.messages[action.payload.conversationId] || []
+          ).map((m) =>
+            m.messageId === action.payload.oldMessageId
+              ? { ...m, messageId: action.payload.newMessageId }
               : m,
           ),
         },
@@ -254,7 +269,7 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
     case 'REMOVE_TAG':
       return {
         ...state,
-        tags: state.tags.filter((t) => !action.payload.includes(t.tagId)),
+        tags: state.tags.filter((t) => !action.payload.includes(String(t.tagId))),
       };
 
     // 文件相关
@@ -265,7 +280,7 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
     case 'REMOVE_FILE':
       return {
         ...state,
-        files: state.files.filter((f) => !action.payload.includes(f.fileId)),
+        files: state.files.filter((f) => !action.payload.includes(String(f.fileId))),
       };
 
     // 用户设置
