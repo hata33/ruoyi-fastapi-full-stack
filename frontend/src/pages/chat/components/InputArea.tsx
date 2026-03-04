@@ -25,6 +25,8 @@ const InputArea: React.FC<InputAreaProps> = ({ onSendMessage: externalOnSendMess
   const sendMessage = externalOnSendMessage || defaultSendMessage;
 
   // 自动调整输入框高度
+  // Note: Inline styles are necessary here for dynamic height calculation based on scrollHeight
+  // This cannot be replaced with CSS classes as the value is computed at runtime
   useEffect(() => {
     const textarea = textareaRef.current;
     if (textarea) {
