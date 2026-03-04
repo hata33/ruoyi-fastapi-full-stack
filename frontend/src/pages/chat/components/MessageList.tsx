@@ -26,7 +26,7 @@ const MessageList: React.FC<MessageListProps> = ({
     : messages;
 
   return (
-    <div className="space-y-4 px-4 py-6">
+    <div className="space-y-4 px-6 py-6">
       {allMessages.map((message, index) => (
         <MessageItem
           key={message.messageId || `streaming-${index}`}

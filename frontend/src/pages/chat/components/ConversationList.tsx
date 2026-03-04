@@ -21,7 +21,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
   onConversationClick,
 }) => {
   return (
-    <div className="space-y-0.5 px-2">
+    <div className="space-y-0.5">
       {conversations.map((conversation) => (
         <ConversationItem
           key={conversation.conversationId}

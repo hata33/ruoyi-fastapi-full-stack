@@ -98,7 +98,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ className }) => {
     >
       {/* Chat Header (Optional) */}
       {currentConversation && (
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3">
             {/* Back Button (Mobile) */}
             {isMobile && (

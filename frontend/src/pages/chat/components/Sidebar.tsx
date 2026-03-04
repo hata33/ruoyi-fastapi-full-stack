@@ -82,7 +82,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
       )}
     >
       {/* New Chat Button */}
-      <div className="p-3 border-b border-gray-200 dark:border-gray-700">
+      <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
         <button
           onClick={handleNewChat}
           className={cn(
@@ -106,7 +106,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
           {/* Pinned Conversations */}
           {pinnedConversations.length > 0 && (
             <>
-              <div className="px-3 py-2">
+              <div className="px-4 py-2">
                 <div className="flex items-center space-x-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
                   <PushpinOutlined className="text-xs" />
                   <span>置顶</span>
@@ -124,7 +124,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
           {unpinnedConversations.length > 0 && (
             <>
               {pinnedConversations.length > 0 && (
-                <div className="px-3 py-2 mt-2">
+                <div className="px-4 py-2 mt-2">
                   <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
                     全部对话
                   </div>
@@ -153,7 +153,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
       {!sidebarCollapsed && (
         <div className="border-t border-gray-200 dark:border-gray-700">
           {/* Tags */}
-          <div className="px-3 py-2">
+          <div className="px-4 py-2">
             <button
               className={cn(
                 'w-full flex items-center space-x-2',
@@ -175,7 +175,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
           </div>
 
           {/* Stats */}
-          <div className="px-3 pb-3">
+          <div className="px-4 pb-3">
             <StatsPanel stats={stats} />
           </div>
         </div>
