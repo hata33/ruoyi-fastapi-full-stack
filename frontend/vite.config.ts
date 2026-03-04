@@ -27,6 +27,18 @@ export default defineConfig(({ mode }) => {
           target: env.VITE_API_TARGET || "http://localhost:9099",
           changeOrigin: true,
           rewrite: (p) => p.replace(/^\/dev-api/, ""),
+          // 支持 SSE 流式响应
+          configure: (proxy, _options) => {
+            proxy.on('proxyReq', (proxyReq, _req, _res) => {
+              // 不对请求做任何修改
+            });
+            proxy.on('proxyRes', (proxyRes, _req, _res) => {
+              // SSE 响应不缓冲
+              if (proxyRes.headers['content-type']?.includes('text/event-stream')) {
+                proxyRes.headers['x-accel-buffering'] = 'no';
+              }
+            });
+          },
         },
         "/profile": {
           target: env.VITE_PROFILE_TARGET || "http://localhost:9099",

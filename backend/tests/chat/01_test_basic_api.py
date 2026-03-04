@@ -19,7 +19,11 @@ async def test():
             print(f"登录失败: {login.text}")
             return
 
-        token = login.json()["token"]
+        login_data = login.json()
+        if login_data.get("code") != 200:
+            print(f"登录失败: {login_data.get('msg')}")
+            return
+        token = login_data["data"]["token"]
         print(f"Token: {token[:30]}...")
 
         headers = {"Authorization": f"Bearer {token}"}

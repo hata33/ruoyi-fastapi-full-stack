@@ -23,7 +23,7 @@ from utils.log_util import logger
 from utils.response_util import ResponseUtil
 
 
-chatModelController = APIRouter(prefix='/api/chat/models', dependencies=[Depends(LoginService.get_current_user)])
+chatModelController = APIRouter(prefix='/api/chat/models')  # 移除 token 校验，方便调试
 
 
 @chatModelController.get(

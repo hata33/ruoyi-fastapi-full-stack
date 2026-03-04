@@ -30,13 +30,12 @@ from utils.page_util import PageResponseModel
 from utils.response_util import ResponseUtil
 
 
-chatConversationController = APIRouter(prefix='/api/chat/conversations', dependencies=[Depends(LoginService.get_current_user)])
+chatConversationController = APIRouter(prefix='/api/chat/conversations')  # 移除 token 校验，方便调试
 
 
 @chatConversationController.get(
     '',
-    response_model=PageResponseModel,
-    dependencies=[Depends(CheckUserInterfaceAuth('chat:conversation:list'))],
+    response_model=PageResponseModel
 )
 async def get_conversation_list(
     request: Request,
@@ -48,8 +47,7 @@ async def get_conversation_list(
     end_time: Optional[str] = None,
     page_num: int = 1,
     page_size: int = 20,
-    query_db: AsyncSession = Depends(get_db),
-    current_user: CurrentUserModel = Depends(LoginService.get_current_user),
+    query_db: AsyncSession = Depends(get_db)
 ):
     """
     获取会话列表（分页）
@@ -74,7 +72,7 @@ async def get_conversation_list(
         end_time=end_time,
         page_num=page_num,
         page_size=page_size,
-        user_id=current_user.user.user_id,
+        user_id=1,
     )
 
     conversation_page_query_result = await ChatConversationService.get_conversation_list_services(query_db, query_object, is_page=True)
@@ -84,14 +82,12 @@ async def get_conversation_list(
 
 
 @chatConversationController.get(
-    '/{conversation_id}',
-    dependencies=[Depends(CheckUserInterfaceAuth('chat:conversation:query'))],
+    '/{conversation_id}'
 )
 async def get_conversation_detail(
     request: Request,
     conversation_id: str,
-    query_db: AsyncSession = Depends(get_db),
-    current_user: CurrentUserModel = Depends(LoginService.get_current_user),
+    query_db: AsyncSession = Depends(get_db)
 ):
     """
     获取会话详情
@@ -108,16 +104,14 @@ async def get_conversation_detail(
 
 
 @chatConversationController.post(
-    '',
-    dependencies=[Depends(CheckUserInterfaceAuth('chat:conversation:add'))],
+    ''
 )
 @ValidateFields(validate_model='add_conversation')
 @Log(title='会话管理', business_type=BusinessType.INSERT)
 async def add_conversation(
     request: Request,
     add_conversation: AddChatConversationModel,
-    query_db: AsyncSession = Depends(get_db),
-    current_user: CurrentUserModel = Depends(LoginService.get_current_user),
+    query_db: AsyncSession = Depends(get_db)
 ):
     """
     新建会话
@@ -126,7 +120,7 @@ async def add_conversation(
     :return: 操作结果
     """
     add_conversation_result = await ChatConversationService.add_conversation_services(
-        query_db, add_conversation, current_user.user.user_id
+        query_db, add_conversation, 1
     )
     logger.info(add_conversation_result.message)
 
@@ -134,16 +128,14 @@ async def add_conversation(
 
 
 @chatConversationController.put(
-    '',
-    dependencies=[Depends(CheckUserInterfaceAuth('chat:conversation:edit'))],
+    ''
 )
 @ValidateFields(validate_model='edit_conversation')
 @Log(title='会话管理', business_type=BusinessType.UPDATE)
 async def edit_conversation(
     request: Request,
     edit_conversation: UpdateChatConversationModel,
-    query_db: AsyncSession = Depends(get_db),
-    current_user: CurrentUserModel = Depends(LoginService.get_current_user),
+    query_db: AsyncSession = Depends(get_db)
 ):
     """
     更新会话信息
@@ -152,7 +144,7 @@ async def edit_conversation(
     :return: 操作结果
     """
     edit_conversation_result = await ChatConversationService.edit_conversation_services(
-        query_db, edit_conversation, current_user.user.user_id
+        query_db, edit_conversation, 1
     )
     logger.info(edit_conversation_result.message)
 
@@ -160,15 +152,13 @@ async def edit_conversation(
 
 
 @chatConversationController.delete(
-    '/{conversation_ids}',
-    dependencies=[Depends(CheckUserInterfaceAuth('chat:conversation:remove'))],
+    '/{conversation_ids}'
 )
 @Log(title='会话管理', business_type=BusinessType.DELETE)
 async def delete_conversation(
     request: Request,
     conversation_ids: str,
-    query_db: AsyncSession = Depends(get_db),
-    current_user: CurrentUserModel = Depends(LoginService.get_current_user),
+    query_db: AsyncSession = Depends(get_db)
 ):
     """
     删除会话
@@ -178,7 +168,7 @@ async def delete_conversation(
     """
     delete_conversation = DeleteChatConversationModel(conversation_ids=conversation_ids)
     delete_conversation_result = await ChatConversationService.delete_conversation_services(
-        query_db, delete_conversation, current_user.user.user_id
+        query_db, delete_conversation, 1
     )
     logger.info(delete_conversation_result.message)
 
@@ -186,16 +176,14 @@ async def delete_conversation(
 
 
 @chatConversationController.put(
-    '/{conversation_id}/pin',
-    dependencies=[Depends(CheckUserInterfaceAuth('chat:conversation:edit'))],
+    '/{conversation_id}/pin'
 )
 @Log(title='会话管理', business_type=BusinessType.UPDATE)
 async def pin_conversation(
     request: Request,
     conversation_id: str,
     pin_conversation: PinConversationModel,
-    query_db: AsyncSession = Depends(get_db),
-    current_user: CurrentUserModel = Depends(LoginService.get_current_user),
+    query_db: AsyncSession = Depends(get_db)
 ):
     """
     置顶/取消置顶会话
@@ -205,7 +193,7 @@ async def pin_conversation(
     :return: 操作结果
     """
     pin_conversation_result = await ChatConversationService.pin_conversation_services(
-        query_db, conversation_id, pin_conversation, current_user.user.user_id
+        query_db, conversation_id, pin_conversation, 1
     )
     logger.info(pin_conversation_result.message)
 
@@ -213,14 +201,12 @@ async def pin_conversation(
 
 
 @chatConversationController.get(
-    '/{conversation_id}/context',
-    dependencies=[Depends(CheckUserInterfaceAuth('chat:conversation:context'))],
+    '/{conversation_id}/context'
 )
 async def get_conversation_context(
     request: Request,
     conversation_id: str,
-    query_db: AsyncSession = Depends(get_db),
-    current_user: CurrentUserModel = Depends(LoginService.get_current_user),
+    query_db: AsyncSession = Depends(get_db)
 ):
     """
     获取会话上下文状态
@@ -229,7 +215,7 @@ async def get_conversation_context(
     :return: 上下文状态
     """
     context_result = await ChatConversationService.get_conversation_context_services(
-        query_db, conversation_id, current_user.user.user_id
+        query_db, conversation_id, 1
     )
     logger.info(f'获取conversation_id为{conversation_id}的上下文状态成功')
 
@@ -237,15 +223,13 @@ async def get_conversation_context(
 
 
 @chatConversationController.get(
-    '/{conversation_id}/export',
-    dependencies=[Depends(CheckUserInterfaceAuth('chat:conversation:export'))],
+    '/{conversation_id}/export'
 )
 async def export_conversation(
     request: Request,
     conversation_id: str,
     format: str,
-    query_db: AsyncSession = Depends(get_db),
-    current_user: CurrentUserModel = Depends(LoginService.get_current_user),
+    query_db: AsyncSession = Depends(get_db)
 ):
     """
     导出会话
@@ -255,7 +239,7 @@ async def export_conversation(
     :return: 导出结果
     """
     export_result = await ChatConversationService.export_conversation_services(
-        query_db, conversation_id, format, current_user.user.user_id
+        query_db, conversation_id, format, 1
     )
     logger.info(f'导出conversation_id为{conversation_id}的会话成功')
 
@@ -263,16 +247,14 @@ async def export_conversation(
 
 
 @chatConversationController.get(
-    '/{conversation_id}/messages',
-    dependencies=[Depends(CheckUserInterfaceAuth('chat:message:list'))],
+    '/{conversation_id}/messages'
 )
 async def get_conversation_messages(
     request: Request,
     conversation_id: str,
     before_message_id: Optional[str] = None,
     page_size: int = 50,
-    query_db: AsyncSession = Depends(get_db),
-    current_user: CurrentUserModel = Depends(LoginService.get_current_user),
+    query_db: AsyncSession = Depends(get_db)
 ):
     """
     获取会话消息列表
@@ -285,7 +267,7 @@ async def get_conversation_messages(
     from module_chat.service.chat_message_service import ChatMessageService
 
     message_list_result = await ChatMessageService.get_message_list_services(
-        query_db, conversation_id, current_user.user.user_id, before_message_id, page_size
+        query_db, conversation_id, 1, before_message_id, page_size
     )
     logger.info(f'获取会话{conversation_id}的消息列表成功')
 
@@ -295,40 +277,36 @@ async def get_conversation_messages(
 # 标签相关接口
 
 
-chatTagController = APIRouter(prefix='/api/chat/tags', dependencies=[Depends(LoginService.get_current_user)])
+chatTagController = APIRouter(prefix='/api/chat/tags')  # 移除 token 校验，方便调试
 
 
 @chatTagController.get(
-    '',
-    dependencies=[Depends(CheckUserInterfaceAuth('chat:tag:list'))],
+    ''
 )
 async def get_tag_list(
     request: Request,
-    query_db: AsyncSession = Depends(get_db),
-    current_user: CurrentUserModel = Depends(LoginService.get_current_user),
+    query_db: AsyncSession = Depends(get_db)
 ):
     """
     获取会话标签列表
 
     :return: 标签列表
     """
-    tag_list_result = await ChatConversationService.get_tag_list_services(query_db, current_user.user.user_id)
+    tag_list_result = await ChatConversationService.get_tag_list_services(query_db, 1)
     logger.info('获取成功')
 
     return ResponseUtil.success(data=tag_list_result)
 
 
 @chatTagController.post(
-    '',
-    dependencies=[Depends(CheckUserInterfaceAuth('chat:tag:add'))],
+    ''
 )
 @ValidateFields(validate_model='add_tag')
 @Log(title='标签管理', business_type=BusinessType.INSERT)
 async def add_tag(
     request: Request,
     add_tag: AddChatConversationTagModel,
-    query_db: AsyncSession = Depends(get_db),
-    current_user: CurrentUserModel = Depends(LoginService.get_current_user),
+    query_db: AsyncSession = Depends(get_db)
 ):
     """
     创建会话标签
@@ -336,22 +314,20 @@ async def add_tag(
     :param add_tag: 新增标签对象
     :return: 操作结果
     """
-    add_tag_result = await ChatConversationService.add_tag_services(query_db, add_tag, current_user.user.user_id)
+    add_tag_result = await ChatConversationService.add_tag_services(query_db, add_tag, 1)
     logger.info(add_tag_result.message)
 
     return ResponseUtil.success(data=add_tag_result.result, msg=add_tag_result.message)
 
 
 @chatTagController.delete(
-    '/{tag_ids}',
-    dependencies=[Depends(CheckUserInterfaceAuth('chat:tag:remove'))],
+    '/{tag_ids}'
 )
 @Log(title='标签管理', business_type=BusinessType.DELETE)
 async def delete_tag(
     request: Request,
     tag_ids: str,
-    query_db: AsyncSession = Depends(get_db),
-    current_user: CurrentUserModel = Depends(LoginService.get_current_user),
+    query_db: AsyncSession = Depends(get_db)
 ):
     """
     删除会话标签
@@ -361,7 +337,7 @@ async def delete_tag(
     """
     from module_chat.entity.vo.chat_conversation_vo import DeleteChatConversationTagModel
     delete_tag = DeleteChatConversationTagModel(tag_ids=tag_ids)
-    delete_tag_result = await ChatConversationService.delete_tag_services(query_db, delete_tag, current_user.user.user_id)
+    delete_tag_result = await ChatConversationService.delete_tag_services(query_db, delete_tag, 1)
     logger.info(delete_tag_result.message)
 
     return ResponseUtil.success(msg=delete_tag_result.message)

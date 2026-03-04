@@ -1,3 +1,4 @@
+aiohttp==3.11.11
 APScheduler==3.11.0
 asyncmy==0.2.10
 DateTime==5.5

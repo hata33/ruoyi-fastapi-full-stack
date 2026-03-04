@@ -44,7 +44,10 @@
       "Bash(mysql:*)",
       "Bash(cmd:*)",
       "Bash(pip install:*)",
-      "Bash(uv sync:*)"
+      "Bash(uv sync:*)",
+      "Bash(psql:*)",
+      "Bash(\"D:\\\\Project\\\\ruoyi-fastapi-full-stack\\\\backend\\\\.venv\\\\Scripts\\\\python.exe\":*)",
+      "Bash(cmd.exe /c \"taskkill /F /PID 13808\")"
     ],
     "deny": [],
     "ask": []

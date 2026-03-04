@@ -15,7 +15,12 @@ async def test():
             "http://localhost:9099/login",
             data={"username": "admin", "password": "admin@123", "code": "1234"}
         )
-        token = login.json()["token"]
+        login_data = login.json()
+        print(f"登录响应: {login_data}")
+        if login_data.get("code") != 200:
+            print(f"登录失败: {login_data.get('msg')}")
+            return
+        token = login_data["data"]["token"]
         headers = {"Authorization": f"Bearer {token}"}
         print("[PASS] 登录成功")
 

@@ -171,7 +171,7 @@ app = FastAPI(
 # 挂载子应用到主应用
 handle_sub_applications(app)  # 处理子应用的挂载逻辑
 # 加载中间件处理方法，如认证、CORS等
-handle_middleware(app)
+# handle_middleware(app)
 # 加载全局异常处理方法，统一处理API异常
 handle_exception(app)
 

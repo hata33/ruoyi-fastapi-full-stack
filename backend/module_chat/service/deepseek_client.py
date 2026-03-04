@@ -12,7 +12,7 @@ import asyncio
 import json
 from typing import AsyncGenerator, Optional
 
-import httpx
+import aiohttp
 from tenacity import (
     retry,
     retry_if_exception_type,
@@ -59,15 +59,17 @@ class DeepSeekClient:
         :return: 是否可重试
         """
         # 网络相关错误可以重试
-        if isinstance(error, (httpx.RequestError, httpx.RemoteProtocolError)):
+        if isinstance(error, (aiohttp.ClientError, aiohttp.ServerDisconnectedError, asyncio.TimeoutError)):
             return True
 
-        # HTTP 5xx 服务器错误可以重试
-        if isinstance(error, httpx.HTTPStatusError):
-            return 500 <= error.response.status_code < 600
+        # aiohttp 的特定错误
+        if isinstance(error, aiohttp.ClientResponseError):
+            # HTTP 5xx 服务器错误可以重试
+            if hasattr(error, 'status') and 500 <= error.status < 600:
+                return True
 
         # 超时错误可以重试
-        if isinstance(error, (httpx.TimeoutException, asyncio.TimeoutError)):
+        if isinstance(error, (asyncio.TimeoutError, aiohttp.ServerTimeoutError)):
             return True
 
         return False
@@ -82,6 +84,8 @@ class DeepSeekClient:
         :param kwargs: 其他参数（temperature, max_tokens 等）
         :yield: 响应片段
         """
+        logger.info(f"[DEBUG-CLIENT-1] _make_request 开始, model={model}, stream={stream}, messages={len(messages)}条")
+
         if not self.api_key:
             # 如果没有配置 API Key，使用模拟模式
             async for chunk in self._mock_stream(messages, model):
@@ -100,35 +104,78 @@ class DeepSeekClient:
             **kwargs
         }
 
+        # 配置 aiohttp 连接器 - 禁用 HTTP/2，启用流式
+        connector = aiohttp.TCPConnector(
+            limit=10,  # 最大连接数
+            limit_per_host=5,  # 每个主机的最大连接数
+            enable_cleanup_closed=True,  # 清理关闭的连接
+        )
+
+        # 配置超时
+        timeout = aiohttp.ClientTimeout(
+            total=self.timeout,  # 总超时时间
+            connect=None,  # 连接超时使用默认
+            sock_read=None,  # socket 读取超时设置为 None，避免中断流式响应
+        )
+
         # 重试逻辑
         last_error = None
         for attempt in range(self.max_retries):
             try:
-                async with httpx.AsyncClient(timeout=self.timeout) as client:
-                    response = await client.post(
+                logger.info(f"[DEBUG-CLIENT-2] 尝试 {attempt + 1}/{self.max_retries}，发送 POST 请求到 {self.CHAT_ENDPOINT}")
+                async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
+                    async with session.post(
                         self.CHAT_ENDPOINT,
                         headers=headers,
                         json=payload
-                    )
-                    response.raise_for_status()
+                    ) as response:
+                        logger.info(f"[DEBUG-CLIENT-3] 收到响应，状态码: {response.status}")
 
-                    if stream:
-                        async for line in response.aiter_lines():
-                            if line.startswith("data: "):
-                                data_str = line[6:]
-                                if data_str == "[DONE]":
-                                    break
-                                try:
-                                    yield json.loads(data_str)
-                                except json.JSONDecodeError as e:
-                                    logger.warning(f"JSON解析失败: {e}")
-                                    continue
-                    else:
-                        data = response.json()
-                        yield data
+                        if response.status != 200:
+                            error_text = await response.text()
+                            logger.error(f"[DEBUG-CLIENT-ERROR] HTTP 错误: {response.status}, 响应: {error_text}")
+                            raise Exception(f"HTTP {response.status}: {error_text}")
 
-                    # 成功则退出重试循环
-                    return
+                        if stream:
+                            logger.info(f"[DEBUG-CLIENT-4] 开始读取 SSE 流（使用 aiohttp iter_chunks）...")
+                            line_count = 0
+                            buffer = b""
+
+                            # 使用 iter_chunks 逐块读取，不缓冲
+                            async for chunk, _ in response.content.iter_chunks():
+                                buffer += chunk
+
+                                # 按行分割处理
+                                while b"\n" in buffer:
+                                    line, buffer = buffer.split(b"\n", 1)
+                                    line = line.decode("utf-8").strip()
+                                    line_count += 1
+
+                                    if not line:
+                                        continue
+
+                                    logger.debug(f"[DEBUG-CLIENT-5-{line_count}] 收到 SSE 行: {line[:100]}...")
+
+                                    if line.startswith("data: "):
+                                        data_str = line[6:]
+                                        if data_str == "[DONE]":
+                                            logger.info(f"[DEBUG-CLIENT-6] 收到 [DONE] 标记，结束流，共{line_count}行")
+                                            return
+                                        try:
+                                            data = json.loads(data_str)
+                                            logger.info(f"[DEBUG-CLIENT-7-{line_count}] 解析 SSE 数据成功: {str(data)[:100]}...，yield")
+                                            yield data
+                                        except json.JSONDecodeError as e:
+                                            logger.warning(f"[DEBUG-CLIENT-8] JSON解析失败: {data_str}, 错误: {e}")
+                                            continue
+
+                            logger.info(f"[DEBUG-CLIENT-9] SSE 流读取结束，共{line_count}行")
+                        else:
+                            data = await response.json()
+                            yield data
+
+                        # 成功则退出重试循环
+                        return
 
             except Exception as e:
                 last_error = e
@@ -216,6 +263,7 @@ class DeepSeekClient:
         :param max_tokens: 最大生成 token 数
         :yield: SSE 事件数据
         """
+        logger.info(f"[DEBUG-CHAT-STREAM-1] chat_stream 开始, model={model}, temperature={temperature}, top_p={top_p}, max_tokens={max_tokens}")
         # 构建请求参数
         kwargs = {}
         if temperature is not None:
@@ -227,28 +275,35 @@ class DeepSeekClient:
 
         # reasoner 模型特殊处理
         is_reasoner = model == self.MODEL_REASONER
+        logger.info(f"[DEBUG-CHAT-STREAM-2] is_reasoner={is_reasoner}")
 
         # 注意：message_start 事件由 controller 层发送（包含消息ID等元数据）
         # 如果是 reasoner 模型，发送推理开始事件
         if is_reasoner:
+            logger.info(f"[DEBUG-CHAT-STREAM-3] yield thinking_start")
             yield {"event": "thinking_start", "data": {}}
 
         thinking_content = ""
         response_content = ""
+        chunk_count = 0
 
         async for chunk in self._make_request(messages, model, stream=True, **kwargs):
+            chunk_count += 1
             if not chunk.get("choices"):
+                logger.debug(f"[DEBUG-CHAT-STREAM-4-{chunk_count}] chunk 无 choices，跳过")
                 continue
 
             choice = chunk["choices"][0]
             delta = choice.get("delta", {})
             finish_reason = choice.get("finish_reason")
+            logger.debug(f"[DEBUG-CHAT-STREAM-5-{chunk_count}] delta: {str(delta)[:50]}..., finish_reason: {finish_reason}")
 
             # 处理推理过程（reasoner 模型特有）
             if "reasoning_content" in delta or "reasoning" in delta:
                 reasoning = delta.get("reasoning_content") or delta.get("reasoning", "")
                 if reasoning:
                     thinking_content += reasoning
+                    logger.info(f"[DEBUG-CHAT-STREAM-6-{chunk_count}] yield thinking_delta, {len(reasoning)}字符")
                     yield {
                         "event": "thinking_delta",
                         "data": {"content": reasoning}
@@ -259,6 +314,7 @@ class DeepSeekClient:
             content = delta.get("content", "")
             if content:
                 response_content += content
+                logger.info(f"[DEBUG-CHAT-STREAM-7-{chunk_count}] yield content_delta, {len(content)}字符")
                 yield {
                     "event": "content_delta",
                     "data": {"content": content}
@@ -266,15 +322,20 @@ class DeepSeekClient:
 
             # 检查是否完成
             if finish_reason:
+                logger.info(f"[DEBUG-CHAT-STREAM-8-{chunk_count}] 收到 finish_reason: {finish_reason}")
                 # 如果是 reasoner 模型，发送推理结束事件
                 if is_reasoner and thinking_content:
+                    logger.info(f"[DEBUG-CHAT-STREAM-9] yield thinking_end")
                     yield {"event": "thinking_end", "data": {}}
 
                 # 获取 token 使用情况
                 usage = chunk.get("usage", {})
                 total_tokens = usage.get("total_tokens", 0)
 
+                logger.info(f"[DEBUG-CHAT-STREAM-10] 准备 yield message_end，tokens_used: {total_tokens}")
+
                 # 发送结束事件（token统计信息，controller需要这些数据）
+                logger.info(f"[DEBUG-CHAT-STREAM-11] yield message_end")
                 yield {
                     "event": "message_end",
                     "data": {
@@ -284,7 +345,12 @@ class DeepSeekClient:
                         "completion_tokens": usage.get("completion_tokens", 0),
                     }
                 }
+                logger.info(f"[DEBUG-CHAT-STREAM-12] chat_stream 完成，共处理{chunk_count}个chunk")
                 break
+            else:
+                # 调试：打印没有 finish_reason 的 chunk
+                if chunk.get("choices") and chunk["choices"][0].get("delta"):
+                    logger.debug(f"[DEBUG-CHAT-STREAM-13] 收到内容 delta，无 finish_reason")
 
     def is_reasoner_model(self, model: str) -> bool:
         """
