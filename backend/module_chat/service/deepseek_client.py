@@ -170,9 +170,7 @@ class DeepSeekClient:
         # reasoner 模型特殊处理
         is_reasoner = model == self.MODEL_REASONER
 
-        # 发送消息开始事件
-        yield {"event": "message_start", "data": {}}
-
+        # 注意：message_start 事件由 controller 层发送（包含消息ID等元数据）
         # 如果是 reasoner 模型，发送推理开始事件
         if is_reasoner:
             yield {"event": "thinking_start", "data": {}}
@@ -216,14 +214,14 @@ class DeepSeekClient:
 
                 # 获取 token 使用情况
                 usage = chunk.get("usage", {})
-                tokens_used = usage.get("total_tokens", 0)
+                total_tokens = usage.get("total_tokens", 0)
 
+                # 发送结束事件（token统计信息，controller需要这些数据）
                 yield {
                     "event": "message_end",
                     "data": {
-                        "thinking_content": thinking_content if is_reasoner else None,
-                        "content": response_content,
-                        "tokens_used": tokens_used,
+                        "tokens_used": total_tokens,
+                        "total_tokens": total_tokens,
                         "prompt_tokens": usage.get("prompt_tokens", 0),
                         "completion_tokens": usage.get("completion_tokens", 0),
                     }

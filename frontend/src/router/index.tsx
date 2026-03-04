@@ -1,131 +1,141 @@
-import { FC, lazy } from "react";
+/**
+ * 动态路由配置
+ * 支持后端动态路由 + 前端硬编码路由相结合
+ */
+
+import { FC, lazy, useMemo } from "react";
 import { Navigate, useLocation, useRoutes } from "react-router-dom";
-import Layout from "@/pages/layout/layout";
-import HomeView from "../pages/home/home";
 import { Button, Result } from "antd";
 import { useUser } from "@/context/user";
+import Layout from "@/pages/layout/layout";
+import HomeView from "@/pages/home/home";
+import { COMPONENT_MAP, ROUTE_PATTERN_MAP } from "./componentMap";
 
+// ==================== 组件懒加载 ====================
+
+// 硬编码基础路由的组件
 const Login = lazy(() => import("@/pages/login/login"));
-const UserSetting = lazy(() => import("@/pages/system/user"));
-const MenuSetting = lazy(() => import("@/pages/system/menu"));
-const Role = lazy(() => import("@/pages/system/role.tsx"));
-const Dept = lazy(() => import("@/pages/system/dept.tsx"));
-const Dict = lazy(() => import("@/pages/system/dict.tsx"));
-const DictData = lazy(() => import("@/pages/system/dictData.tsx"));
-const Post = lazy(() => import("@/pages/system/post.tsx"));
-const SysConfig = lazy(() => import("@/pages/system/config.tsx"));
-const SysNotice = lazy(() => import("@/pages/system/notice.tsx"));
-const OperLog = lazy(() => import("@/pages/system/log/operlog.tsx"));
-const LoginLog = lazy(() => import("@/pages/system/log/logininfor.tsx"));
-const ToolGen = lazy(() => import("@/pages/tool/gen.tsx"));
-const Userinfo  = lazy(() => import('@/pages/userinfo.tsx'))
-const DeepSeek = lazy(() => import('@/pages/deepseek/deepseek.tsx'))
-const TodoNote = lazy(() => import('@/pages/todo/note.tsx'))
-const TodoTask = lazy(() => import('@/pages/todo/task.tsx'))
-const TodoCategory = lazy(() => import('@/pages/todo/category.tsx'))
-const DailyTask = lazy(() => import('@/pages/todo/daily-task.tsx'))
-const DailyTaskCategory = lazy(() => import('@/pages/todo/daily-task-category.tsx'))
-const ChatPage = lazy(() => import('@/pages/chat/ChatPage'))
+const Userinfo = lazy(() => import('@/pages/userinfo.tsx'));
+const ChatPage = lazy(() => import('@/pages/chat/ChatPage'));
+
+// ==================== 硬编码的基础路由 ====================
+
+/**
+ * 这些路由始终存在，不依赖后端配置
+ * 主要包括：首页、聊天、用户中心等核心功能
+ */
+const STATIC_ROUTES = [
+  {
+    path: "",
+    element: <HomeView />,
+  },
+  {
+    path: "chat",
+    element: <ChatPage />,
+  },
+  {
+    path: "chat/:conversationId",  // 支持动态会话ID
+    element: <ChatPage />,
+  },
+  {
+    path: "userinfo",
+    element: <Userinfo />,
+  },
+];
+
+// ==================== 动态路由转换函数 ====================
+
+/**
+ * 将后端返回的路由数据转换为React Router格式
+ * @param backendRoutes 后端返回的路由数据
+ * @returns React Router格式的路由配置
+ */
+function convertBackendRoutes(backendRoutes: any[]): any[] {
+  if (!backendRoutes || backendRoutes.length === 0) {
+    return [];
+  }
+
+  const routes: any[] = [];
+
+  for (const route of backendRoutes) {
+    // 跳过隐藏的路由
+    if (route.hidden) {
+      continue;
+    }
+
+    // 构建路由配置
+    const routeConfig: any = {
+      path: route.path?.startsWith('/') ? route.path.slice(1) : route.path,
+    };
+
+    // 处理meta信息
+    if (route.meta) {
+      routeConfig.meta = route.meta;
+    }
+
+    // 处理组件
+    if (route.component) {
+      // 特殊组件处理
+      if (route.component === 'Layout' || route.component === 'ParentView') {
+        // Layout和ParentView不需要设置element，由React Router处理
+        routeConfig.element = undefined;
+      } else if (route.component === 'InnerLink') {
+        // 内链使用iframe组件
+        routeConfig.element = lazy(() => import('@/components/iframe'));
+      } else {
+        // 从映射表中查找组件
+        const componentKey = route.path?.startsWith('/') ? route.path.slice(1) : route.path;
+        const Component = COMPONENT_MAP[componentKey];
+
+        if (Component) {
+          routeConfig.element = <Component />;
+        } else {
+          // 如果没有映射，使用通用占位组件
+          console.warn(`未找到组件映射: ${route.component}, path: ${route.path}`);
+          routeConfig.element = (
+            <Result
+              status="warning"
+              title="组件未找到"
+              subTitle={`路径: ${route.path}, 组件: ${route.component}`}
+            />
+          );
+        }
+      }
+    }
+
+    // 递归处理子路由
+    if (route.children && route.children.length > 0) {
+      routeConfig.children = convertBackendRoutes(route.children);
+    }
+
+    routes.push(routeConfig);
+  }
+
+  return routes;
+}
+
+// ==================== 主路由组件 ====================
 
 const Router: FC = () => {
   const location = useLocation();
-  const { isLogin } = useUser();
+  const { isLogin, routes: backendRoutes } = useUser();
+
+  // 将后端动态路由转换为React Router格式
+  const dynamicRoutes = useMemo(() => {
+    return convertBackendRoutes(backendRoutes || []);
+  }, [backendRoutes]);
+
+  // 合并静态路由和动态路由
+  const mainRoutes = useMemo(() => {
+    return [...STATIC_ROUTES, ...dynamicRoutes];
+  }, [dynamicRoutes]);
 
   return useRoutes(
     [
       {
         path: "/",
         element: isLogin ? <Layout /> : <Navigate to="/login" />,
-        children: [
-          {
-            path: "",
-            element: <HomeView />,
-          },
-          {
-            path: "system/user",
-            element: <UserSetting />,
-          },
-          {
-            path: "system/role",
-            element: <Role />,
-          },
-          {
-            path: "system/menu",
-            element: <MenuSetting />
-          },
-          {
-            path: "system/dept",
-            element: <Dept />
-          },
-          {
-            path: "system/dict",
-            element: <Dict />
-          },
-          {
-            path: "system/dict/:type",
-            element: <DictData />
-          },
-          {
-            path: "system/post",
-            element: <Post />
-          },
-          {
-            path: "system/config",
-            element: <SysConfig />
-          },
-          {
-            path: "system/notice",
-            element: <SysNotice />
-          },
-          {
-            path: "system/log/operlog",
-            element: <OperLog />
-          },
-          {
-            path: "system/log/logininfor",
-            element: <LoginLog />
-          },
-          {
-            path: 'tool/gen',
-            element: <ToolGen />
-          },
-          {
-            path: 'userinfo',
-            element: <Userinfo/>
-          },
-          {
-            path: 'deepseek',
-            element: <DeepSeek/>
-          },
-          {
-            path: 'todo/note',
-            element: <TodoNote/>
-          },
-          {
-            path: 'todo/task',
-            element: <TodoTask/>
-          },
-          {
-            path: 'todo/category',
-            element: <TodoCategory/>
-          },
-          {
-            path: 'daily-task',
-            element: <DailyTask/>
-          },
-          {
-            path: 'daily-task-category',
-            element: <DailyTaskCategory/>
-          },
-          {
-            path: 'chat',
-            element: <ChatPage/>
-          },
-          {
-            path: 'chat/:conversationId',
-            element: <ChatPage/>
-          }
-        ],
+        children: mainRoutes,
       },
       {
         path: "/login",

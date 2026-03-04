@@ -119,7 +119,15 @@ async def send_message_stream(
             logger.error(f'流式生成失败: {str(e)}')
             yield f"event: error\ndata: {json.dumps({'code': 1009, 'message': str(e)})}\n\n"
 
-    return StreamingResponse(generate_stream(), media_type="text/event-stream")
+    return StreamingResponse(
+        generate_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",  # 禁用nginx缓冲
+            "Connection": "keep-alive",
+        }
+    )
 
 
 @chatMessageController.post(
@@ -238,4 +246,12 @@ async def regenerate_message(
             logger.error(f'重新生成失败: {str(e)}')
             yield f"event: error\ndata: {json.dumps({'code': 1009, 'message': str(e)})}\n\n"
 
-    return StreamingResponse(generate_regenerate_stream(), media_type="text/event-stream")
+    return StreamingResponse(
+        generate_regenerate_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",  # 禁用nginx缓冲
+            "Connection": "keep-alive",
+        }
+    )

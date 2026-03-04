@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAppTheme } from "@/context/theme";
 import { useUser } from "@/context/user";
 import * as icons from '@ant-design/icons';
-import logo from './x.png'
+import logo from './x.png';
 
 
 interface MenuItem {
@@ -14,28 +14,69 @@ interface MenuItem {
   children?: MenuItem[];
 }
 
-function genMenus(routes: any[], menus: MenuItem[] = [], prevPath = "") {
-  routes.forEach((route: any) => {
-    if (route.hidden) return;
-    if (!route.meta) {
-      route = route.children[0];
+/**
+ * 将后端路由转换为菜单项
+ */
+function convertRouteToMenu(route: any, parentPath = ""): MenuItem | null {
+  // 跳过隐藏路由
+  if (route.hidden) {
+    return null;
+  }
+
+  // 跳过没有meta信息的路由（通常是布局路由）
+  if (!route.meta && !route.children) {
+    return null;
+  }
+
+  // 获取图标
+  const iconStr = route.meta?.icon;
+  const Icon = iconStr ? (icons as any)[iconStr] : undefined;
+
+  // 构建当前菜单项的key
+  const currentPath = parentPath ? `${parentPath}/${route.path}` : `/${route.path}`;
+
+  const menu: MenuItem = {
+    key: currentPath,
+    icon: Icon ? <Icon /> : <icons.AppstoreOutlined />,
+    label: route.meta?.title || route.path,
+  };
+
+  // 递归处理子路由
+  if (route.children && route.children.length > 0) {
+    menu.children = [];
+    for (const child of route.children) {
+      const childMenu = convertRouteToMenu(child, currentPath);
+      if (childMenu) {
+        menu.children.push(childMenu);
+      }
     }
-    const Icon = (icons as any)[route.meta?.icon]
-    const menu: MenuItem = {
-      key: prevPath + route.path,
-      icon: Icon ? <Icon/> : <></>,
-      label: route.meta?.title,
-      children: [],
-    };
-    if (route.children && route.children.length > 0) {
-      menu.children = [];
-      genMenus(route.children, menu.children, prevPath + route.path + "/");
-    } else {
+
+    // 如果没有子菜单，删除children属性
+    if (menu.children.length === 0) {
       delete menu.children;
     }
-    menus.push(menu);
-  });
-  return menus;
+  }
+
+  return menu;
+}
+
+/**
+ * 合并静态菜单和动态菜单
+ */
+function mergeMenus(staticMenus: MenuItem[], dynamicRoutes: any[]): MenuItem[] {
+  const allMenus: MenuItem[] = [...staticMenus];
+
+  // 添加动态路由生成的菜单
+  if (dynamicRoutes && dynamicRoutes.length > 0) {
+    for (const route of dynamicRoutes) {
+      const menu = convertRouteToMenu(route);
+      if (menu) {
+        allMenus.push(menu);
+      }
+    }
+  }
+
+  return allMenus;
 }
 
 const Slider: FC = () => {
@@ -43,67 +84,58 @@ const Slider: FC = () => {
   const navigate = useNavigate();
 
   const { slideExpand } = useAppTheme();
-
-  const { routes } = useUser();
+  const { routes: backendRoutes } = useUser();
 
   const [isScroll, setIsScroll] = useState(false);
 
+  // ==================== 静态硬编码菜单 ====================
+
+  const staticMenus: MenuItem[] = [
+    {
+      key: "/",
+      icon: <icons.HomeOutlined />,
+      label: "首页",
+    },
+    {
+      key: "/chat-menu",
+      icon: <icons.MessageOutlined />,
+      label: "AI 对话",
+      children: [
+        {
+          key: "/chat",
+          icon: <icons.WechatOutlined />,
+          label: "新建对话",
+        },
+      ],
+    },
+  ];
+
+  // ==================== 合并所有菜单 ====================
+
   const menus = useMemo(() => {
-    return genMenus(routes, [
-      {
-        key: "/",
-        icon: <icons.HomeOutlined />,
-        label: "首页",
-      },
-      {
-        key: "/chat-menu",
-        icon: <icons.MessageOutlined />,
-        label: "AI 对话",
-        children: [
-          {
-            key: "/chat",
-            icon: <icons.WechatOutlined />,
-            label: "新建对话",
-          },
-        ],
-      },
-      {
-        key: "/daily-task-menu",
-        icon: <icons.CheckSquareOutlined />,
-        label: "每日任务",
-        children: [
-          {
-            key: "/daily-task",
-            icon: <icons.CheckCircleOutlined />,
-            label: "任务管理",
-          },
-          {
-            key: "/daily-task-category",
-            icon: <icons.FolderOutlined />,
-            label: "分类管理",
-          },
-        ],
-      },
-    ]);
-  }, [routes]);
+    return mergeMenus(staticMenus, backendRoutes || []);
+  }, [backendRoutes]);
+
+  // ==================== 计算当前展开的菜单 ====================
 
   const openKeys = useMemo(() => {
     if (location.pathname === "/") return ["/"];
+
     const keys: string[] = [];
-    const deepMenus = (menus: MenuItem[]) => {
-      menus.some((menu) => {
-        if (location.pathname.startsWith(menu!.key as string)) {
-          keys.push(menu?.key as string);
-        }
-        if (location.pathname.endsWith(menu!.key as string)) {
-          return true
+
+    // 递归查找包含当前路径的菜单
+    const findOpenKeys = (menuList: MenuItem[]) => {
+      for (const menu of menuList) {
+        if (location.pathname.startsWith(menu.key)) {
+          keys.push(menu.key);
         }
         if (menu.children?.length) {
-          deepMenus(menu.children);
+          findOpenKeys(menu.children);
         }
-      });
+      }
     };
-    deepMenus(menus.slice(1));
+
+    findOpenKeys(menus);
     return keys;
   }, [location, menus]);
 
