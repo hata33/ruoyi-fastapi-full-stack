@@ -112,7 +112,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ className }) => {
 
             {/* Title */}
             <div>
-              <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                 {currentConversation.title}
               </h2>
               <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400 mt-0.5">

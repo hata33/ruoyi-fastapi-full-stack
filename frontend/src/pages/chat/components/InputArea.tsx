@@ -126,7 +126,7 @@ const InputArea: React.FC<InputAreaProps> = ({ onSendMessage: externalOnSendMess
             'placeholder:text-gray-500 dark:placeholder:text-gray-400',
             'focus:outline-none',
             'min-h-[24px] max-h-[200px]',
-            'text-sm leading-relaxed',
+            'text-base leading-relaxed',
           )}
           rows={1}
         />

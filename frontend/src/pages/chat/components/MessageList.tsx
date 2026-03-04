@@ -99,7 +99,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isStreaming }) => {
 
           {/* Message Content */}
           {isUser ? (
-            <p className="text-sm whitespace-pre-wrap wrap-break-word">{message.content}</p>
+            <p className="text-base whitespace-pre-wrap wrap-break-word">{message.content}</p>
           ) : (
             <MarkdownRenderer content={message.content} isStreaming={isStreaming} />
           )}
