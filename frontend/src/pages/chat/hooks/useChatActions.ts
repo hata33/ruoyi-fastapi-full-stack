@@ -165,7 +165,14 @@ export const useMessages = () => {
       conversationId: targetConversationId,
       role: 'user',
       content: data.content,
-      attachments: data.attachments?.map(a => ({ fileId: a.fileId, fileName: '', fileType: 'txt', fileSize: 0, filePath: '' })) || [],
+      // attachments 现在是 number[]，需要映射为 Attachment 对象
+      attachments: data.attachments?.map(fileId => ({
+        fileId,
+        fileName: '',
+        fileType: 'txt',
+        fileSize: 0,
+        filePath: ''
+      })) || [],
       userId: 0,
       createTime: new Date().toISOString(),
     };
@@ -184,8 +191,8 @@ export const useMessages = () => {
             dispatch({
               type: 'SET_STREAMING_MESSAGE',
               payload: {
-                messageId: event.data.messageId,
-                conversationId: targetConversationId,
+                messageId: event.data.assistantMessageId,  // 使用 assistantMessageId
+                conversationId: event.data.conversationId,   // 使用后端返回的 conversationId
                 role: 'assistant',
                 content: '',
                 attachments: [],
@@ -286,8 +293,8 @@ export const useMessages = () => {
             dispatch({
               type: 'SET_STREAMING_MESSAGE',
               payload: {
-                messageId: event.data.messageId,
-                conversationId: currentConversationId!,
+                messageId: event.data.assistantMessageId,  // 使用 assistantMessageId
+                conversationId: event.data.conversationId,   // 使用后端返回的 conversationId
                 role: 'assistant',
                 content: '',
                 attachments: [],

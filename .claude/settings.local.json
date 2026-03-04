@@ -38,7 +38,11 @@
       "Bash(sed:*)",
       "Bash(npx tsc --noEmit)",
       "Bash(npm run dev)",
-      "Bash(npm run build)"
+      "Bash(npm run build)",
+      "Bash(PYTHONPATH=\"D:/Project/AASelf/RuoYi-FastAPI/backend:$PYTHONPATH\" python:*)",
+      "Bash(PYTHONPATH=\".\" python:*)",
+      "Bash(mysql:*)",
+      "Bash(cmd:*)"
     ],
     "deny": [],
     "ask": []

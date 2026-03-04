@@ -129,9 +129,10 @@ export interface SendMessageRequest {
   content: string;
   modelId?: string;
   enableSearch?: boolean;
-  attachments?: Array<{ fileId: number }>;
+  attachments?: number[];  // 附件ID列表 - 与后端 List[int] 对应
   temperature?: number;
-  maxTokens?: number;
+  topP?: number;          // 采样参数 - 对应后端 top_p
+  maxTokens?: number;     // 最大生成token数 - 对应后端 max_tokens
 }
 
 /** SSE 事件类型 */
@@ -157,6 +158,10 @@ export interface MessageStartData {
   assistantMessageId: number;
   conversationId: number;
 }
+
+/** 注意：后端返回的是 assistantMessageId 而非 messageId
+ * 前端使用时应取 event.data.assistantMessageId 作为 messageId
+ */
 
 /** content_delta 事件数据 */
 export interface ContentDeltaData {
