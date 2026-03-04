@@ -24,7 +24,7 @@ class ChatConversationDao:
     """
 
     @classmethod
-    async def get_conversation_by_id(cls, db: AsyncSession, conversation_id: int):
+    async def get_conversation_by_id(cls, db: AsyncSession, conversation_id: str):
         """
         根据会话id获取会话详细信息
 
@@ -105,7 +105,7 @@ class ChatConversationDao:
         await db.execute(delete(ChatConversation).where(ChatConversation.conversation_id.in_(conversation_ids)))
 
     @classmethod
-    async def update_conversation_pin(cls, db: AsyncSession, conversation_id: int, is_pinned: bool, pin_time: datetime = None):
+    async def update_conversation_pin(cls, db: AsyncSession, conversation_id: str, is_pinned: bool, pin_time: datetime = None):
         """
         更新会话置顶状态
 
@@ -129,7 +129,7 @@ class ChatConversationDao:
         )
 
     @classmethod
-    async def update_conversation_message_count(cls, db: AsyncSession, conversation_id: int, delta: int = 1):
+    async def update_conversation_message_count(cls, db: AsyncSession, conversation_id: str, delta: int = 1):
         """
         更新会话消息数量
 
@@ -146,7 +146,7 @@ class ChatConversationDao:
         )
 
     @classmethod
-    async def update_conversation_tokens(cls, db: AsyncSession, conversation_id: int, delta: int = 0):
+    async def update_conversation_tokens(cls, db: AsyncSession, conversation_id: str, delta: int = 0):
         """
         更新会话累计token数
 

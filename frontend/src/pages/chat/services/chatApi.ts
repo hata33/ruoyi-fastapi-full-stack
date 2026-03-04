@@ -39,7 +39,7 @@ export const fetchModels = async (isEnabled?: boolean): Promise<ApiResponse<Mode
  * 获取用户模型配置
  */
 export const fetchModelConfig = async (modelId?: string): Promise<ApiResponse<ModelConfig>> => {
-  return http.get('/api/chat/model-config', {
+  return http.get('/api/chat/models/config', {
     params: { modelId },
   });
 };
@@ -48,14 +48,14 @@ export const fetchModelConfig = async (modelId?: string): Promise<ApiResponse<Mo
  * 保存用户模型配置
  */
 export const saveModelConfig = async (config: ModelConfig): Promise<ApiResponse<{ msg: string }>> => {
-  return http.post('/api/chat/model-config', config);
+  return http.post('/api/chat/models/config', config);
 };
 
 /**
  * 获取模型参数预设
  */
 export const fetchModelPresets = async (): Promise<ApiResponse<ModelPreset[]>> => {
-  return http.get('/api/chat/model-presets');
+  return http.get('/api/chat/models/presets');
 };
 
 // ==================== 会话管理 ====================

@@ -88,7 +88,7 @@ class ChatConversationService:
         return conversation_list_result
 
     @classmethod
-    async def get_conversation_detail_services(cls, query_db: AsyncSession, conversation_id: int, include_messages: bool = False):
+    async def get_conversation_detail_services(cls, query_db: AsyncSession, conversation_id: str, include_messages: bool = False):
         """
         获取会话详细信息service
 
@@ -210,7 +210,7 @@ class ChatConversationService:
         :return: 删除会话校验结果
         """
         if page_object.conversation_ids:
-            conversation_id_list = [int(cid) for cid in page_object.conversation_ids.split(',')]
+            conversation_id_list = [cid.strip() for cid in page_object.conversation_ids.split(',') if cid.strip()]
 
             # 验证所有会话都属于当前用户
             for conversation_id in conversation_id_list:
@@ -237,7 +237,7 @@ class ChatConversationService:
             raise ServiceException(message='传入会话id为空')
 
     @classmethod
-    async def pin_conversation_services(cls, query_db: AsyncSession, conversation_id: int, page_object: PinConversationModel, user_id: int):
+    async def pin_conversation_services(cls, query_db: AsyncSession, conversation_id: str, page_object: PinConversationModel, user_id: int):
         """
         置顶/取消置顶会话service
 
@@ -264,7 +264,7 @@ class ChatConversationService:
             raise e
 
     @classmethod
-    async def get_conversation_context_services(cls, query_db: AsyncSession, conversation_id: int, user_id: int):
+    async def get_conversation_context_services(cls, query_db: AsyncSession, conversation_id: str, user_id: int):
         """
         获取会话上下文状态service
 
@@ -310,7 +310,7 @@ class ChatConversationService:
         return result
 
     @classmethod
-    async def export_conversation_services(cls, query_db: AsyncSession, conversation_id: int, format_type: str, user_id: int):
+    async def export_conversation_services(cls, query_db: AsyncSession, conversation_id: str, format_type: str, user_id: int):
         """
         导出会话service
 

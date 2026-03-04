@@ -5,13 +5,23 @@ DeepSeek API 客户端
 - 封装 DeepSeek API 调用
 - 支持流式响应
 - 支持 deepseek-chat 和 deepseek-reasoner 模型
+- 添加请求重试机制
 """
 
+import asyncio
 import json
-import httpx
 from typing import AsyncGenerator, Optional
-from utils.log_util import logger
+
+import httpx
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
+
 from config.env import AppConfig
+from utils.log_util import logger
 
 
 class DeepSeekClient:
@@ -21,6 +31,11 @@ class DeepSeekClient:
     MODEL_CHAT = "deepseek-chat"
     MODEL_REASONER = "deepseek-reasoner"
 
+    # 重试配置
+    MAX_RETRIES = 3  # 最大重试次数
+    INITIAL_RETRY_DELAY = 1.0  # 初始重试延迟（秒）
+    MAX_RETRY_DELAY = 10.0  # 最大重试延迟（秒）
+
     def __init__(self):
         """初始化客户端"""
         from config.env import DeepSeekConfig
@@ -28,7 +43,7 @@ class DeepSeekClient:
         self.api_key = DeepSeekConfig.deepseek_api_key
         self.api_base = DeepSeekConfig.deepseek_api_base
         self.timeout = DeepSeekConfig.deepseek_timeout
-        self.max_retries = DeepSeekConfig.deepseek_max_retries
+        self.max_retries = DeepSeekConfig.deepseek_max_retries if hasattr(DeepSeekConfig, 'deepseek_max_retries') else self.MAX_RETRIES
 
         # API 端点
         self.CHAT_ENDPOINT = f"{self.api_base}/chat/completions"
@@ -36,9 +51,30 @@ class DeepSeekClient:
         if not self.api_key:
             logger.warning("DEEPSEEK_API_KEY 未配置，将使用模拟模式")
 
+    def _is_retryable_error(self, error: Exception) -> bool:
+        """
+        判断错误是否可以重试
+
+        :param error: 异常对象
+        :return: 是否可重试
+        """
+        # 网络相关错误可以重试
+        if isinstance(error, (httpx.RequestError, httpx.RemoteProtocolError)):
+            return True
+
+        # HTTP 5xx 服务器错误可以重试
+        if isinstance(error, httpx.HTTPStatusError):
+            return 500 <= error.response.status_code < 600
+
+        # 超时错误可以重试
+        if isinstance(error, (httpx.TimeoutException, asyncio.TimeoutError)):
+            return True
+
+        return False
+
     async def _make_request(self, messages: list, model: str, stream: bool = True, **kwargs) -> AsyncGenerator:
         """
-        发起 API 请求
+        发起 API 请求（带重试机制）
 
         :param messages: 消息列表
         :param model: 模型名称
@@ -64,38 +100,60 @@ class DeepSeekClient:
             **kwargs
         }
 
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
+        # 重试逻辑
+        last_error = None
+        for attempt in range(self.max_retries):
             try:
-                response = await client.post(
-                    self.CHAT_ENDPOINT,
-                    headers=headers,
-                    json=payload
-                )
-                response.raise_for_status()
+                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                    response = await client.post(
+                        self.CHAT_ENDPOINT,
+                        headers=headers,
+                        json=payload
+                    )
+                    response.raise_for_status()
 
-                if stream:
-                    async for line in response.aiter_lines():
-                        if line.startswith("data: "):
-                            data_str = line[6:]
-                            if data_str == "[DONE]":
-                                break
-                            try:
-                                yield json.loads(data_str)
-                            except json.JSONDecodeError:
-                                continue
-                else:
-                    data = response.json()
-                    yield data
+                    if stream:
+                        async for line in response.aiter_lines():
+                            if line.startswith("data: "):
+                                data_str = line[6:]
+                                if data_str == "[DONE]":
+                                    break
+                                try:
+                                    yield json.loads(data_str)
+                                except json.JSONDecodeError as e:
+                                    logger.warning(f"JSON解析失败: {e}")
+                                    continue
+                    else:
+                        data = response.json()
+                        yield data
 
-            except httpx.HTTPStatusError as e:
-                logger.error(f"DeepSeek API 请求失败: {e.response.status_code} - {e.response.text}")
-                raise Exception(f"AI 服务请求失败: {e.response.status_code}")
-            except httpx.RequestError as e:
-                logger.error(f"DeepSeek API 网络错误: {str(e)}")
-                raise Exception(f"AI 服务网络错误: {str(e)}")
+                    # 成功则退出重试循环
+                    return
+
             except Exception as e:
-                logger.error(f"DeepSeek API 未知错误: {str(e)}")
-                raise Exception(f"AI 服务错误: {str(e)}")
+                last_error = e
+                is_retryable = self._is_retryable_error(e)
+
+                if not is_retryable:
+                    # 不可重试的错误直接抛出
+                    logger.error(f"DeepSeek API 不可重试错误: {str(e)}")
+                    raise
+
+                if attempt < self.max_retries - 1:
+                    # 计算重试延迟（指数退避）
+                    delay = min(
+                        self.INITIAL_RETRY_DELAY * (2 ** attempt),
+                        self.MAX_RETRY_DELAY
+                    )
+                    logger.warning(
+                        f"DeepSeek API 请求失败 (尝试 {attempt + 1}/{self.max_retries}): {str(e)}"
+                        f"，{delay}秒后重试..."
+                    )
+                    await asyncio.sleep(delay)
+                else:
+                    # 最后一次尝试仍然失败
+                    logger.error(f"DeepSeek API 请求失败，已达最大重试次数: {str(e)}")
+                    raise Exception(f"AI 服务请求失败: {str(e)}")
 
     async def _mock_stream(self, messages: list, model: str) -> AsyncGenerator:
         """

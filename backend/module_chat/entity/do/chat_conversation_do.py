@@ -17,7 +17,7 @@ class ChatConversation(Base):
     """
     __tablename__ = 'chat_conversation'
 
-    conversation_id = Column(Integer, primary_key=True, autoincrement=True, comment='会话ID')
+    conversation_id = Column(String(36), primary_key=True, comment='会话ID（UUID）')
     title = Column(String(200), nullable=False, default='新对话', comment='会话标题')
     model_id = Column(String(50), nullable=False, comment='当前使用的模型ID')
     is_pinned = Column(Boolean, default=False, comment='是否置顶')

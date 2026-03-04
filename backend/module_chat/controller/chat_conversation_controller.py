@@ -89,7 +89,7 @@ async def get_conversation_list(
 )
 async def get_conversation_detail(
     request: Request,
-    conversation_id: int,
+    conversation_id: str,
     query_db: AsyncSession = Depends(get_db),
     current_user: CurrentUserModel = Depends(LoginService.get_current_user),
 ):
@@ -192,7 +192,7 @@ async def delete_conversation(
 @Log(title='会话管理', business_type=BusinessType.UPDATE)
 async def pin_conversation(
     request: Request,
-    conversation_id: int,
+    conversation_id: str,
     pin_conversation: PinConversationModel,
     query_db: AsyncSession = Depends(get_db),
     current_user: CurrentUserModel = Depends(LoginService.get_current_user),
@@ -218,7 +218,7 @@ async def pin_conversation(
 )
 async def get_conversation_context(
     request: Request,
-    conversation_id: int,
+    conversation_id: str,
     query_db: AsyncSession = Depends(get_db),
     current_user: CurrentUserModel = Depends(LoginService.get_current_user),
 ):
@@ -242,7 +242,7 @@ async def get_conversation_context(
 )
 async def export_conversation(
     request: Request,
-    conversation_id: int,
+    conversation_id: str,
     format: str,
     query_db: AsyncSession = Depends(get_db),
     current_user: CurrentUserModel = Depends(LoginService.get_current_user),
@@ -268,8 +268,8 @@ async def export_conversation(
 )
 async def get_conversation_messages(
     request: Request,
-    conversation_id: int,
-    before_message_id: Optional[int] = None,
+    conversation_id: str,
+    before_message_id: Optional[str] = None,
     page_size: int = 50,
     query_db: AsyncSession = Depends(get_db),
     current_user: CurrentUserModel = Depends(LoginService.get_current_user),

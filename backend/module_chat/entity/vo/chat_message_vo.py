@@ -19,8 +19,8 @@ class ChatMessageModel(BaseModel):
     """
     model_config = ConfigDict(alias_generator=to_camel, from_attributes=True)
 
-    message_id: Optional[int] = Field(default=None, description='消息ID')
-    conversation_id: Optional[int] = Field(default=None, description='会话ID')
+    message_id: Optional[str] = Field(default=None, description='消息ID（UUID）')
+    conversation_id: Optional[str] = Field(default=None, description='会话ID（UUID）')
     role: Optional[Literal['user', 'assistant', 'system']] = Field(default=None, description='角色')
     content: Optional[str] = Field(default=None, description='消息内容')
     thinking_content: Optional[str] = Field(default=None, description='推理过程内容')
@@ -44,7 +44,7 @@ class SendMessageModel(BaseModel):
     """
     model_config = ConfigDict(alias_generator=to_camel)
 
-    conversation_id: int = Field(description='会话ID')
+    conversation_id: str = Field(description='会话ID（UUID）')
     content: str = Field(description='消息内容')
     model_id: Optional[str] = Field(default=None, description='模型ID')
     enable_search: Optional[bool] = Field(default=False, description='是否启用联网搜索')
@@ -85,7 +85,7 @@ class StreamMessageModel(BaseModel):
 
     event_type: Literal['message_start', 'content_delta', 'thinking_start', 'thinking_delta',
                          'thinking_end', 'message_end', 'error'] = Field(description='事件类型')
-    message_id: Optional[int] = Field(default=None, description='消息ID')
+    message_id: Optional[str] = Field(default=None, description='消息ID（UUID）')
     content: Optional[str] = Field(default=None, description='内容增量')
     tokens_used: Optional[int] = Field(default=None, description='使用的token数')
     total_tokens: Optional[int] = Field(default=None, description='累计token数')

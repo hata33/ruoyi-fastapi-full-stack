@@ -17,8 +17,8 @@ class ChatMessage(Base):
     """
     __tablename__ = 'chat_message'
 
-    message_id = Column(Integer, primary_key=True, autoincrement=True, comment='消息ID')
-    conversation_id = Column(Integer, nullable=False, comment='所属会话ID')
+    message_id = Column(String(36), primary_key=True, comment='消息ID（UUID）')
+    conversation_id = Column(String(36), nullable=False, comment='所属会话ID（UUID）')
     role = Column(String(20), nullable=False, comment='角色（user/assistant/system）')
     content = Column(Text, nullable=False, comment='消息内容')
     thinking_content = Column(Text, comment='推理过程内容（reasoner模型）')

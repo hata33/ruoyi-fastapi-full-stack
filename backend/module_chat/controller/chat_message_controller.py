@@ -4,15 +4,16 @@
 说明：
 - 定义消息管理相关的HTTP接口
 - 包括发送消息、流式输出、停止生成、重新生成、消息列表等
+- 使用UUID作为消息和会话ID
 """
 
 import json
-import time
+from typing import Optional
+
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from pydantic_validation_decorator import ValidateFields
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional
 
 from config.enums import BusinessType
 from config.get_db import get_db
@@ -23,9 +24,9 @@ from module_admin.service.login_service import LoginService
 from module_chat.entity.vo.chat_message_vo import MessageListModel, RegenerateMessageModel, SendMessageModel
 from module_chat.service.chat_message_service import ChatMessageService
 from module_chat.service.deepseek_client import get_deepseek_client
+from module_chat.utils.uuid_util import generate_uuid
 from utils.log_util import logger
 from utils.response_util import ResponseUtil
-
 
 chatMessageController = APIRouter(prefix='/api/chat/messages', dependencies=[Depends(LoginService.get_current_user)])
 
@@ -51,8 +52,8 @@ async def send_message_stream(
         query_db, send_message, current_user.user.user_id
     )
 
-    # 生成临时 AI 消息 ID（使用时间戳避免冲突）
-    assistant_message_id = int(time.time() * 1000)
+    # 生成临时 AI 消息 ID（使用UUID）
+    assistant_message_id = generate_uuid()
 
     async def generate_stream():
         """生成流式响应"""
@@ -137,14 +138,14 @@ async def send_message_stream(
 @Log(title='消息管理', business_type=BusinessType.UPDATE)
 async def stop_generation(
     request: Request,
-    message_id: int,
+    message_id: str,
     query_db: AsyncSession = Depends(get_db),
     current_user: CurrentUserModel = Depends(LoginService.get_current_user),
 ):
     """
     停止生成
 
-    :param message_id: AI消息ID
+    :param message_id: AI消息ID（UUID）
     :return: 操作结果（包含已保存的消息信息）
     """
     from datetime import datetime
@@ -169,7 +170,7 @@ async def stop_generation(
 )
 async def regenerate_message(
     request: Request,
-    message_id: int,
+    message_id: str,
     regenerate_message: RegenerateMessageModel,
     query_db: AsyncSession = Depends(get_db),
     current_user: CurrentUserModel = Depends(LoginService.get_current_user),
@@ -177,7 +178,7 @@ async def regenerate_message(
     """
     重新生成消息
 
-    :param message_id: 消息ID（用户消息）
+    :param message_id: 消息ID（UUID，用户消息）
     :param regenerate_message: 重新生成参数
     :return: SSE流
     """
@@ -186,8 +187,8 @@ async def regenerate_message(
         query_db, message_id, regenerate_message, current_user.user.user_id
     )
 
-    # 生成临时 AI 消息 ID（使用时间戳避免冲突）
-    assistant_message_id = int(time.time() * 1000)
+    # 生成临时 AI 消息 ID（使用UUID）
+    assistant_message_id = generate_uuid()
 
     async def generate_regenerate_stream():
         """生成重新生成的流式响应"""

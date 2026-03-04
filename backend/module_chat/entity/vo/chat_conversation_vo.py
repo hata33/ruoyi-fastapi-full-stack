@@ -19,7 +19,7 @@ class ChatConversationModel(BaseModel):
     """
     model_config = ConfigDict(alias_generator=to_camel, from_attributes=True)
 
-    conversation_id: Optional[int] = Field(default=None, description='会话ID')
+    conversation_id: Optional[str] = Field(default=None, description='会话ID（UUID）')
     title: Optional[str] = Field(default=None, description='会话标题')
     model_id: Optional[str] = Field(default=None, description='模型ID')
     is_pinned: Optional[bool] = Field(default=None, description='是否置顶')
@@ -49,7 +49,7 @@ class ChatConversationQueryModel(BaseModel):
     """
     model_config = ConfigDict(alias_generator=to_camel, from_attributes=True)
 
-    conversation_id: Optional[int] = Field(default=None, description='会话ID')
+    conversation_id: Optional[str] = Field(default=None, description='会话ID（UUID）')
     title: Optional[str] = Field(default=None, description='会话标题')
     model_id: Optional[str] = Field(default=None, description='模型ID')
     is_pinned: Optional[bool] = Field(default=None, description='是否置顶')
@@ -89,7 +89,7 @@ class UpdateChatConversationModel(BaseModel):
     """
     model_config = ConfigDict(populate_by_name=True)
 
-    conversation_id: int = Field(alias='conversationId', description='会话ID')
+    conversation_id: str = Field(alias='conversationId', description='会话ID（UUID）')
     title: Optional[str] = Field(default=None, alias='title', description='会话标题')
     model_id: Optional[str] = Field(default=None, alias='modelId', description='模型ID')
     tag_list: Optional[List[str]] = Field(default=None, alias='tagList', description='标签列表')
@@ -119,7 +119,7 @@ class ChatConversationDetailModel(BaseModel):
     """
     model_config = ConfigDict(alias_generator=to_camel)
 
-    conversation_id: int = Field(description='会话ID')
+    conversation_id: str = Field(description='会话ID（UUID）')
     title: str = Field(description='会话标题')
     model_id: str = Field(description='模型ID')
     is_pinned: bool = Field(description='是否置顶')
