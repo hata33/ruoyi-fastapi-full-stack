@@ -18,9 +18,10 @@ const StopGenerationButton: React.FC<StopGenerationButtonProps> = ({ onStop, cla
       onClick={onStop}
       className={cn(
         'flex items-center space-x-2 px-4 py-2',
-        'bg-red-50 dark:bg-red-900/20',
-        'hover:bg-red-100 dark:hover:bg-red-900/30',
-        'text-red-600 dark:text-red-400',
+        'bg-white dark:bg-gray-700',
+        'hover:bg-gray-100 dark:hover:bg-gray-600',
+        'text-gray-700 dark:text-gray-300',
+        'border border-gray-300 dark:border-gray-600',
         'rounded-lg',
         'transition-all duration-200',
         'text-sm font-medium',

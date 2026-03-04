@@ -31,7 +31,7 @@ const MessageList: React.FC<MessageListProps> = ({
         <MessageItem
           key={message.messageId || `streaming-${index}`}
           message={message}
-          isStreaming={isStreaming && message === streamingMessage}
+          isStreaming={isStreaming && message.messageId === streamingMessage?.messageId}
         />
       ))}
     </div>
@@ -68,13 +68,13 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isStreaming }) => {
       {/* Avatar */}
       <div
         className={cn(
-          'flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center',
+          'flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center border',
           isUser
-            ? 'bg-indigo-500'
-            : 'bg-gray-400 dark:bg-gray-600',
+            ? 'bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600'
+            : 'bg-white dark:bg-gray-600 border-gray-300 dark:border-gray-500',
         )}
       >
-        <span className="text-white text-sm">{isUser ? '👤' : '🤖'}</span>
+        <span className="text-gray-700 dark:text-gray-300 text-sm">{isUser ? '👤' : '🤖'}</span>
       </div>
 
       {/* Content */}
@@ -86,10 +86,10 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isStreaming }) => {
       >
         <div
           className={cn(
-            'inline-block max-w-[85%] rounded-2xl px-4 py-2.5',
+            'inline-block max-w-[85%] rounded-2xl px-4 py-2.5 border',
             isUser
-              ? 'bg-indigo-500 text-white rounded-br-sm'
-              : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-sm',
+              ? 'bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-br-sm'
+              : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-bl-sm',
           )}
         >
           {/* Thinking Process (for reasoner model) */}
@@ -109,10 +109,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isStreaming }) => {
             <div
               className={cn(
                 'flex items-center space-x-2 mt-2 pt-2',
-                'border-t border-gray-200 dark:border-gray-600',
-                isUser
-                  ? 'border-indigo-400/30'
-                  : 'border-gray-200 dark:border-gray-600',
+                'border-t border-gray-200 dark:border-gray-700',
               )}
             >
               <ClockCircleOutlined className="text-xs opacity-70" />
@@ -210,7 +207,7 @@ const ThinkingPanel: React.FC<ThinkingPanelProps> = ({ content }) => {
         <div
           className={cn(
             'mt-2 p-2 rounded-lg',
-            'bg-gray-100 dark:bg-gray-800',
+            'bg-white dark:bg-gray-800',
             'text-xs',
           )}
         >

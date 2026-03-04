@@ -128,7 +128,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ className }) => {
             {/* Pin Button */}
             {currentConversation.isPinned && (
               <button className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
-                <span className="text-indigo-500">📌</span>
+                <span className="text-gray-600 dark:text-gray-400">📌</span>
               </button>
             )}
 
@@ -245,7 +245,7 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ icon, title, descriptio
         'p-4 rounded-xl border border-gray-200 dark:border-gray-700',
         'bg-gray-50 dark:bg-gray-900',
         'hover:bg-gray-100 dark:hover:bg-gray-800',
-        'hover:border-indigo-300 dark:hover:border-indigo-600',
+        'hover:border-gray-300 dark:hover:border-gray-600',
         'text-left',
         'transition-all duration-200',
       )}

@@ -12,6 +12,7 @@ import { useConversations, useChatUI } from './hooks/useChatActions';
 import ChatHeader from './components/ChatHeader';
 import Sidebar from './components/Sidebar';
 import ChatArea from './components/ChatArea';
+import './chat.css';
 
 const ChatPageContent: React.FC = () => {
   const { conversationId } = useParams<{ conversationId?: string }>();

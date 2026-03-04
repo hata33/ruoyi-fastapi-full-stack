@@ -53,8 +53,8 @@ const ConversationItem: React.FC<ConversationItemProps> = ({ conversation, isAct
         'cursor-pointer',
         'transition-all duration-150',
         isActive
-          ? 'bg-indigo-50 dark:bg-indigo-900/20'
-          : 'hover:bg-gray-200 dark:hover:bg-gray-800',
+          ? 'bg-gray-200 dark:bg-gray-700'
+          : 'hover:bg-gray-100 dark:hover:bg-gray-800',
       )}
       onClick={onClick}
     >
@@ -62,9 +62,9 @@ const ConversationItem: React.FC<ConversationItemProps> = ({ conversation, isAct
         {/* Left Icon/Avatar */}
         <div className="shrink-0">
           {conversation.isPinned ? (
-            <PushpinOutlined className="text-indigo-500 text-sm mt-1" />
+            <PushpinOutlined className="text-gray-500 dark:text-gray-400 text-sm mt-1" />
           ) : (
-            <div className="w-6 h-6 bg-gray-400 dark:bg-gray-500 rounded flex items-center justify-center">
+            <div className="w-6 h-6 bg-gray-300 dark:bg-gray-600 rounded flex items-center justify-center">
               <span className="text-white text-xs">💬</span>
             </div>
           )}
@@ -77,8 +77,8 @@ const ConversationItem: React.FC<ConversationItemProps> = ({ conversation, isAct
             className={cn(
               'text-sm font-medium truncate mb-0.5',
               isActive
-                ? 'text-indigo-600 dark:text-indigo-400'
-                : 'text-gray-900 dark:text-white',
+                ? 'text-gray-900 dark:text-white'
+                : 'text-gray-700 dark:text-gray-300',
             )}
           >
             {conversation.title}

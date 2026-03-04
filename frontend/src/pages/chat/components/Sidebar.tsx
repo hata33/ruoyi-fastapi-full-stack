@@ -87,13 +87,12 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
           onClick={handleNewChat}
           className={cn(
             'w-full flex items-center justify-center space-x-2',
-            'bg-indigo-500',
-            'hover:bg-indigo-600',
-            'text-white',
+            'bg-gray-900 dark:bg-gray-100',
+            'hover:bg-gray-800 dark:hover:bg-gray-200',
+            'text-white dark:text-gray-900',
             'px-4 py-2.5 rounded-lg',
             'font-medium text-sm',
             'transition-colors duration-150',
-            'shadow-sm hover:shadow-md',
           )}
         >
           <PlusOutlined className="text-base" />

@@ -29,8 +29,8 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ className }) => {
       {/* Logo */}
       <div className="flex items-center space-x-3">
         <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
-            <span className="text-white text-lg">🤖</span>
+          <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center">
+            <span className="text-gray-700 dark:text-gray-300 text-lg">🤖</span>
           </div>
           <span className="text-lg font-semibold text-gray-900 dark:text-white hidden sm:block">
             DeepSeek Chat
@@ -49,11 +49,11 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ className }) => {
             placeholder="搜索对话..."
             className={cn(
               'w-full pl-9 pr-4 py-2',
-              'bg-gray-100 dark:bg-gray-700',
-              'border border-transparent rounded-lg',
+              'bg-white dark:bg-gray-700',
+              'border border-gray-300 dark:border-gray-600 rounded-lg',
               'text-sm text-gray-900 dark:text-white',
               'placeholder:text-gray-500 dark:placeholder:text-gray-400',
-              'focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-gray-600',
+              'focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 focus:bg-white dark:focus:bg-gray-600',
               'transition-all duration-200',
             )}
           />

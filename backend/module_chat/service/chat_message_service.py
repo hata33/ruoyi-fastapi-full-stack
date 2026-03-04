@@ -241,9 +241,14 @@ class ChatMessageService:
         if not is_valid_uuid(message_id):
             raise ServiceException(message='消息ID格式错误')
 
+        # 尝试查找消息
         message = await ChatMessageDao.get_message_by_id(query_db, message_id)
+
+        # 如果消息不存在，可能是正在流式生成中还未保存到数据库
+        # 这种情况下直接返回成功，让前端清除流式状态即可
         if not message:
-            raise ServiceException(message='消息不存在', code=ChatErrorCode.MESSAGE_NOT_FOUND)
+            logger.info(f'消息 {message_id} 在数据库中不存在，可能正在生成中，返回停止成功')
+            return CrudResponseModel(is_success=True, message='已停止生成', data={'content': '', 'tokens_used': 0})
 
         # 验证权限
         conversation = await ChatConversationDao.get_conversation_by_id(query_db, message.conversation_id)
@@ -252,7 +257,7 @@ class ChatMessageService:
 
         # TODO: 实现真正的停止逻辑
         # 需要建立生成任务管理机制，设置停止标志并通知生成器
-        return CrudResponseModel(is_success=True, message='已停止生成')
+        return CrudResponseModel(is_success=True, message='已停止生成', data={'content': message.content, 'tokens_used': message.tokens_used or 0})
 
     @classmethod
     async def regenerate_message_services(

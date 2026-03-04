@@ -84,9 +84,9 @@ const InputArea: React.FC<InputAreaProps> = ({ onSendMessage: externalOnSendMess
       <div
         className={cn(
           'flex items-end space-x-3',
-          'bg-gray-100 dark:bg-gray-700',
+          'bg-white dark:bg-gray-700',
           'rounded-2xl px-4 py-3',
-          'border border-transparent focus-within:border-indigo-500',
+          'border border-gray-300 dark:border-gray-600 focus-within:border-gray-400 dark:focus-within:border-gray-500',
           'transition-all duration-200',
         )}
       >
@@ -135,10 +135,11 @@ const InputArea: React.FC<InputAreaProps> = ({ onSendMessage: externalOnSendMess
           disabled={!canSend}
           className={cn(
             'flex-shrink-0 p-2 rounded-lg',
-            'bg-indigo-500',
-            'hover:bg-indigo-600',
-            'disabled:bg-gray-400',
-            'text-white',
+            'bg-gray-900 dark:bg-white',
+            'hover:bg-gray-800 dark:hover:bg-gray-100',
+            'disabled:bg-gray-300 dark:disabled:bg-gray-600',
+            'text-white dark:text-gray-900',
+            'disabled:text-gray-500 dark:disabled:text-gray-400',
             'transition-colors duration-150',
             'disabled:cursor-not-allowed',
           )}
