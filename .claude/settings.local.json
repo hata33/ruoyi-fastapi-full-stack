@@ -42,7 +42,9 @@
       "Bash(PYTHONPATH=\"D:/Project/AASelf/RuoYi-FastAPI/backend:$PYTHONPATH\" python:*)",
       "Bash(PYTHONPATH=\".\" python:*)",
       "Bash(mysql:*)",
-      "Bash(cmd:*)"
+      "Bash(cmd:*)",
+      "Bash(pip install:*)",
+      "Bash(uv sync:*)"
     ],
     "deny": [],
     "ask": []

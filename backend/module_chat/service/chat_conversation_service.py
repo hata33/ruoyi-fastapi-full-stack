@@ -21,6 +21,7 @@ from module_chat.entity.vo.chat_conversation_vo import (
 from module_chat.entity.vo.common_vo import CrudResponseModel
 from utils.common_util import CamelCaseUtil
 from utils.log_util import logger
+from module_chat.utils.uuid_util import generate_uuid
 import json
 
 
@@ -136,6 +137,7 @@ class ChatConversationService:
         """
         # 构建会话对象
         conversation = ChatConversation(
+            conversation_id=generate_uuid(),
             title=page_object.title or '新对话',
             model_id=page_object.model_id or 'deepseek-chat',
             user_id=user_id,

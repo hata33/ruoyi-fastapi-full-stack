@@ -107,7 +107,7 @@ const Login: FC = () => {
             name="password"
             label="密码"
             rules={[{ required: true, message: "请输入密码" }]}
-            initialValue="5173/userinfo"
+            initialValue="admin@123"
           >
             <Input placeholder="请输入密码" type="password" />
           </Form.Item>

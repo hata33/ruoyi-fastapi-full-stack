@@ -12,7 +12,7 @@ async def test():
         print("=== 1. 登录 ===")
         login = await client.post(
             "http://localhost:9099/login",
-            data={"username": "admin", "password": "admin123", "code": "1234"}
+            data={"username": "admin", "password": "admin@123", "code": "1234"}
         )
         print(f"状态码: {login.status_code}")
         if login.status_code != 200:

@@ -7,7 +7,6 @@ UUID工具函数
 """
 
 import uuid
-from typing import str
 
 
 def generate_uuid() -> str:

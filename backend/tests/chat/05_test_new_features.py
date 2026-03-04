@@ -13,7 +13,7 @@ async def test():
         print("=== 1. 登录 ===")
         login = await client.post(
             "http://localhost:9099/login",
-            data={"username": "admin", "password": "admin123", "code": "1234"}
+            data={"username": "admin", "password": "admin@123", "code": "1234"}
         )
         token = login.json()["token"]
         print(f"Token: {token[:30]}...")

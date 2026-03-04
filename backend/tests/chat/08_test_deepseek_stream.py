@@ -24,7 +24,7 @@ from typing import AsyncGenerator
 # 配置
 BASE_URL = "http://localhost:9099"
 USERNAME = "admin"
-PASSWORD = "admin123"
+PASSWORD = "admin@123"
 
 
 async def login() -> str:
