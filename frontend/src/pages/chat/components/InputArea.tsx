@@ -85,7 +85,7 @@ const InputArea: React.FC<InputAreaProps> = ({ onSendMessage: externalOnSendMess
         className={cn(
           'flex items-end space-x-3',
           'bg-white dark:bg-gray-700',
-          'rounded-2xl px-4 py-3',
+          'rounded-xl px-4 py-3',
           'border border-gray-300 dark:border-gray-600 focus-within:border-gray-400 dark:focus-within:border-gray-500',
           'transition-all duration-200',
         )}

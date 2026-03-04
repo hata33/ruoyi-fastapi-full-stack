@@ -86,7 +86,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isStreaming }) => {
       >
         <div
           className={cn(
-            'inline-block max-w-[85%] rounded-2xl px-4 py-2.5 border',
+            'inline-block max-w-[85%] rounded-xl px-4 py-2.5 border',
             isUser
               ? 'bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-br-sm'
               : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-bl-sm',
