@@ -3,13 +3,14 @@
  * 支持后端动态路由 + 前端硬编码路由相结合
  */
 
-import { FC, lazy, useMemo } from "react";
+import { FC, lazy, useMemo, Suspense } from "react";
 import { Navigate, useLocation, useRoutes } from "react-router-dom";
 import { Button, Result } from "antd";
 import { useUser } from "@/context/user";
 import Layout from "@/pages/layout/layout";
 import HomeView from "@/pages/home/home";
 import { COMPONENT_MAP, ROUTE_PATTERN_MAP } from "./componentMap";
+import PageLoading from "@/components/page-loading/page-loading";
 
 // ==================== 组件懒加载 ====================
 
@@ -30,6 +31,17 @@ const STATIC_ROUTES = [
     element: <HomeView />,
   },
   {
+    path: "userinfo",
+    element: <Userinfo />,
+  },
+];
+
+/**
+ * 全屏路由（不包含 Layout）
+ * 用于需要全屏显示的页面，如 AI 聊天
+ */
+const FULLSCREEN_ROUTES = [
+  {
     path: "chat",
     element: <ChatPage />,
   },
@@ -37,11 +49,17 @@ const STATIC_ROUTES = [
     path: "chat/:conversationId",  // 支持动态会话ID
     element: <ChatPage />,
   },
-  {
-    path: "userinfo",
-    element: <Userinfo />,
-  },
 ];
+
+/**
+ * 全屏路由包装组件
+ * 用于渲染不需要 Layout 的全屏页面
+ * 注意：这个组件暂时不使用，直接在路由中展开 FULLSCREEN_ROUTES
+ */
+const FullscreenRoutes: FC = () => {
+  const location = useLocation();
+  return useRoutes(FULLSCREEN_ROUTES, location);
+};
 
 // ==================== 动态路由转换函数 ====================
 
@@ -132,6 +150,24 @@ const Router: FC = () => {
 
   return useRoutes(
     [
+      // 全屏路由（不包含 Layout）- 需要登录
+      {
+        path: "/chat",
+        element: isLogin ? (
+          <Suspense fallback={<PageLoading />}>
+            <ChatPage />
+          </Suspense>
+        ) : <Navigate to="/login" />,
+      },
+      {
+        path: "/chat/:conversationId",
+        element: isLogin ? (
+          <Suspense fallback={<PageLoading />}>
+            <ChatPage />
+          </Suspense>
+        ) : <Navigate to="/login" />,
+      },
+      // 需要 Layout 的主应用路由
       {
         path: "/",
         element: isLogin ? <Layout /> : <Navigate to="/login" />,

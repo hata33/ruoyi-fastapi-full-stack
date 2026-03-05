@@ -79,6 +79,29 @@ function mergeMenus(staticMenus: MenuItem[], dynamicRoutes: any[]): MenuItem[] {
   return allMenus;
 }
 
+// ==================== 静态硬编码菜单 ====================
+// 移到组件外部，避免每次渲染重新创建
+
+const staticMenus: MenuItem[] = [
+  {
+    key: "/",
+    icon: <icons.HomeOutlined />,
+    label: "首页",
+  },
+  {
+    key: "/chat-menu",
+    icon: <icons.MessageOutlined />,
+    label: "AI 对话",
+    children: [
+      {
+        key: "/chat",
+        icon: <icons.WechatOutlined />,
+        label: "新建对话",
+      },
+    ],
+  },
+];
+
 const Slider: FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -88,27 +111,19 @@ const Slider: FC = () => {
 
   const [isScroll, setIsScroll] = useState(false);
 
-  // ==================== 静态硬编码菜单 ====================
+  // ==================== 处理菜单点击 ====================
 
-  const staticMenus: MenuItem[] = [
-    {
-      key: "/",
-      icon: <icons.HomeOutlined />,
-      label: "首页",
-    },
-    {
-      key: "/chat-menu",
-      icon: <icons.MessageOutlined />,
-      label: "AI 对话",
-      children: [
-        {
-          key: "/chat",
-          icon: <icons.WechatOutlined />,
-          label: "新建对话",
-        },
-      ],
-    },
-  ];
+  const handleMenuClick = useCallback((key: string) => {
+    // 聊天菜单在新标签页打开全屏页面
+    if (key === '/chat') {
+      window.open('/chat', '_blank');
+      return;
+    }
+    // 其他路由正常导航
+    if (location.pathname !== key) {
+      navigate(key);
+    }
+  }, [navigate, location.pathname]);
 
   // ==================== 合并所有菜单 ====================
 
@@ -170,8 +185,7 @@ const Slider: FC = () => {
           mode="inline"
           inlineCollapsed={!slideExpand}
           onClick={(item) => {
-            if (location.pathname === item.key) return;
-            navigate(item.key as string);
+            handleMenuClick(item.key as string);
           }}
         />
       </div>

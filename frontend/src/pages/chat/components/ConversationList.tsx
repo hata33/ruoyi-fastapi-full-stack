@@ -11,8 +11,8 @@ import type { Conversation } from '../types';
 
 interface ConversationListProps {
   conversations: Conversation[];
-  currentConversationId: number | null;
-  onConversationClick: (conversationId: number) => void;
+  currentConversationId: string | null;
+  onConversationClick: (conversationId: string) => void;
 }
 
 const ConversationList: React.FC<ConversationListProps> = ({

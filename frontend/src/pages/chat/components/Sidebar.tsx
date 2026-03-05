@@ -6,7 +6,7 @@
 import React, { useEffect, useCallback } from 'react';
 import { PlusOutlined, PushpinOutlined, TagOutlined, BarChartOutlined } from '@ant-design/icons';
 import { cn } from '@/utils/cn';
-import { useChatContext } from '../context/ChatContext';
+import { useChatStore } from '../store/chatStore';
 import { useConversations, useTags, useChatUI } from '../hooks/useChatActions';
 import ConversationList from './ConversationList';
 import TagList from './TagList';
@@ -17,7 +17,11 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ className }) => {
-  const { conversations, currentConversationId, sidebarCollapsed, sidebarVisible } = useChatContext();
+  const conversations = useChatStore((state) => state.conversations);
+  const currentConversationId = useChatStore((state) => state.currentConversationId);
+  const sidebarCollapsed = useChatStore((state) => state.sidebarCollapsed);
+  const sidebarVisible = useChatStore((state) => state.sidebarVisible);
+
   const { fetchConversations, createConversation, setCurrentConversation } = useConversations();
   const { tags, fetchTags } = useTags();
   const { setSidebarVisible } = useChatUI();
@@ -43,23 +47,28 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
     }
   }, [createConversation, setCurrentConversation]);
 
-  // 计算统计数据
-  const stats = React.useMemo(() => {
-    const todayMessages = conversations.reduce((sum, c) => sum + c.messageCount, 0);
-    const totalTokens = conversations.reduce((sum, c) => sum + c.totalTokens, 0);
+  // 使用 useMemo 优化：计算统计数据和分组会话
+  const { stats, pinnedConversations, unpinnedConversations } = React.useMemo(() => {
+    // 按置顶和时间排序
+    const sorted = [...conversations].sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      return new Date(b.updateTime).getTime() - new Date(a.updateTime).getTime();
+    });
+
     return {
-      todayMessages,
-      totalTokens,
-      totalConversations: conversations.length,
+      stats: {
+        todayMessages: conversations.reduce((sum, c) => sum + c.messageCount, 0),
+        totalTokens: conversations.reduce((sum, c) => sum + c.totalTokens, 0),
+        totalConversations: conversations.length,
+      },
+      pinnedConversations: sorted.filter((c) => c.isPinned),
+      unpinnedConversations: sorted.filter((c) => !c.isPinned),
     };
   }, [conversations]);
 
-  // 置顶的会话
-  const pinnedConversations = conversations.filter((c) => c.isPinned);
-  const unpinnedConversations = conversations.filter((c) => !c.isPinned);
-
   // 移动端：点击后关闭侧边栏
-  const handleConversationClick = useCallback((conversationId: number) => {
+  const handleConversationClick = useCallback((conversationId: string) => {
     setCurrentConversation(conversationId);
     if (window.innerWidth < 768) {
       setSidebarVisible(false);

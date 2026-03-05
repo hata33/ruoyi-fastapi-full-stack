@@ -6,7 +6,7 @@
 import React, { useEffect, useCallback, useRef } from 'react';
 import { ArrowLeftOutlined, MoreOutlined, ExportOutlined, TagOutlined } from '@ant-design/icons';
 import { cn } from '@/utils/cn';
-import { useChatContext } from '../context/ChatContext';
+import { useChatStore } from '../store/chatStore';
 import { useMessages, useConversations, useChatUI } from '../hooks/useChatActions';
 import MessageList from './MessageList';
 import InputArea from './InputArea';
@@ -18,7 +18,11 @@ interface ChatAreaProps {
 }
 
 const ChatArea: React.FC<ChatAreaProps> = ({ className }) => {
-  const { currentConversationId, currentConversation, messages, sidebarVisible, currentModelId } = useChatContext();
+  const currentConversationId = useChatStore((state) => state.currentConversationId);
+  const messages = useChatStore((state) => state.messages);
+  const sidebarVisible = useChatStore((state) => state.sidebarVisible);
+  const currentModelId = useChatStore((state) => state.currentModelId);
+
   const { isStreaming, streamingMessage, fetchMessages, stopGeneration, sendMessage } = useMessages();
   const { setSidebarVisible } = useChatUI();
   const { createConversation, setCurrentConversation } = useConversations();
@@ -97,7 +101,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ className }) => {
       )}
     >
       {/* Chat Header (Optional) */}
-      {currentConversation && (
+      {currentConversationId && (
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3">
             {/* Back Button (Mobile) */}
@@ -113,32 +117,16 @@ const ChatArea: React.FC<ChatAreaProps> = ({ className }) => {
             {/* Title */}
             <div>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {currentConversation.title}
+                新对话
               </h2>
               <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                <span>{currentConversation.messageCount} 条消息</span>
-                <span>·</span>
-                <span>{currentConversation.totalTokens} tokens</span>
+                <span>{currentMessages.length} 条消息</span>
               </div>
             </div>
           </div>
 
           {/* Actions */}
           <div className="flex items-center space-x-1">
-            {/* Pin Button */}
-            {currentConversation.isPinned && (
-              <button className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
-                <span className="text-gray-600 dark:text-gray-400">📌</span>
-              </button>
-            )}
-
-            {/* Tags */}
-            {currentConversation.tagList.length > 0 && (
-              <button className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
-                <TagOutlined className="text-gray-600 dark:text-gray-300" />
-              </button>
-            )}
-
             {/* Export */}
             <button className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
               <ExportOutlined className="text-gray-600 dark:text-gray-300" />

@@ -1,10 +1,10 @@
 /**
  * Chat Module Custom Hooks
- * 聊天模块自定义 Hooks
+ * 聊天模块自定义 Hooks (使用 Zustand)
  */
 
 import { useCallback } from 'react';
-import { useChatContext } from '../context/ChatContext';
+import { useChatStore } from '../store/chatStore';
 import * as chatApi from '../services/chatApi';
 import type {
   CreateConversationRequest,
@@ -22,91 +22,86 @@ import type {
  * 会话操作 Hook
  */
 export const useConversations = () => {
-  const { dispatch, conversationsLoading, conversationsError } = useChatContext();
+  const conversationsLoading = useChatStore((state) => state.conversationsLoading);
+  const conversationsError = useChatStore((state) => state.conversationsError);
+  const setConversations = useChatStore((state) => state.setConversations);
+  const addConversation = useChatStore((state) => state.addConversation);
+  const removeConversation = useChatStore((state) => state.removeConversation);
+  const setConversationsLoading = useChatStore((state) => state.setConversationsLoading);
+  const setConversationsError = useChatStore((state) => state.setConversationsError);
+  const setCurrentConversation = useChatStore((state) => state.setCurrentConversation);
 
   /** 获取会话列表 */
   const fetchConversations = useCallback(async (params?: Parameters<typeof chatApi.fetchConversations>[0]) => {
-    dispatch({ type: 'SET_CONVERSATIONS_LOADING', payload: true });
-    dispatch({ type: 'SET_CONVERSATIONS_ERROR', payload: null });
+    setConversationsLoading(true);
+    setConversationsError(null);
 
     try {
       const res = await chatApi.fetchConversations(params);
       if (res.code === 200) {
         // 后端返回的分页数据，rows 直接在顶层而非 data 中
         const conversations = res.rows || res.data?.rows || [];
-        dispatch({ type: 'SET_CONVERSATIONS', payload: conversations });
+        setConversations(conversations);
       } else {
-        dispatch({ type: 'SET_CONVERSATIONS_ERROR', payload: res.msg });
+        setConversationsError(res.msg);
       }
     } catch (error: any) {
-      dispatch({ type: 'SET_CONVERSATIONS_ERROR', payload: error.message });
+      setConversationsError(error.message);
     } finally {
-      dispatch({ type: 'SET_CONVERSATIONS_LOADING', payload: false });
+      setConversationsLoading(false);
     }
-  }, [dispatch]);
+  }, [setConversations, setConversationsLoading, setConversationsError]);
 
   /** 创建会话 */
   const createConversation = useCallback(async (data: CreateConversationRequest): Promise<Conversation | null> => {
     const res = await chatApi.createConversation(data);
     if (res.code === 200 && res.data) {
       // 处理字段名映射：后端可能返回下划线命名，转换为驼峰命名
+      // 使用类型断言来访问后端返回的下划线字段
+      const backendData = res.data as any;
       const conversation: Conversation = {
-        conversationId: res.data.conversationId || res.data.conversation_id,
-        title: res.data.title,
-        modelId: res.data.modelId || res.data.model_id,
-        isPinned: res.data.isPinned || res.data.is_pinned || false,
-        tagList: res.data.tagList || res.data.tag_list || [],
-        totalTokens: res.data.totalTokens || res.data.total_tokens || 0,
-        messageCount: res.data.messageCount || res.data.message_count || 0,
-        createTime: res.data.createTime || res.data.create_time,
-        updateTime: res.data.updateTime || res.data.update_time,
+        conversationId: backendData.conversationId || backendData.conversation_id,
+        title: backendData.title,
+        modelId: backendData.modelId || backendData.model_id,
+        isPinned: backendData.isPinned || backendData.is_pinned || false,
+        tagList: backendData.tagList || backendData.tag_list || [],
+        totalTokens: backendData.totalTokens || backendData.total_tokens || 0,
+        messageCount: backendData.messageCount || backendData.message_count || 0,
+        createTime: backendData.createTime || backendData.create_time,
+        updateTime: backendData.updateTime || backendData.update_time,
       };
-      dispatch({ type: 'ADD_CONVERSATION', payload: conversation });
+      addConversation(conversation);
       return conversation;
     }
     return null;
-  }, [dispatch]);
+  }, [addConversation]);
 
   /** 更新会话 */
   const updateConversation = useCallback(async (data: UpdateConversationRequest) => {
-
     const res = await chatApi.updateConversation(data);
     if (res.code === 200) {
       await fetchConversations();
     }
     return res.data;
-  }, [dispatch, fetchConversations]);
+  }, [fetchConversations]);
 
   /** 删除会话 */
   const deleteConversations = useCallback(async (conversationIds: string[]) => {
-    try {
-      const res = await chatApi.deleteConversation(conversationIds);
-      if (res.code === 200) {
-        dispatch({ type: 'REMOVE_CONVERSATION', payload: conversationIds });
-      }
-      return res.data;
-    } catch (error: any) {
-      throw error;
+    const res = await chatApi.deleteConversation(conversationIds);
+    if (res.code === 200) {
+      removeConversation(conversationIds);
     }
-  }, [dispatch]);
+    return res.data;
+  }, [removeConversation]);
 
   /** 切换置顶 */
   const togglePin = useCallback(async (conversationId: string, isPinned: boolean) => {
-    try {
-      const res = await chatApi.toggleConversationPin(conversationId, isPinned);
-      if (res.code === 200) {
-        await fetchConversations();
-      }
-      return res.data;
-    } catch (error: any) {
-      throw error;
+    const res = await chatApi.toggleConversationPin(conversationId, isPinned);
+    if (res.code === 200) {
+      await fetchConversations();
     }
-  }, [dispatch, fetchConversations]);
-
-  /** 设置当前会话 */
-  const setCurrentConversation = useCallback((conversationId: string | null) => {
-    dispatch({ type: 'SET_CURRENT_CONVERSATION', payload: conversationId });
-  }, [dispatch]);
+    return res.data;
+  }, [fetchConversations]);
 
   return {
     conversationsLoading,
@@ -126,20 +121,28 @@ export const useConversations = () => {
  * 消息操作 Hook
  */
 export const useMessages = () => {
-  const { dispatch, currentConversationId, streamingMessage, isStreaming } = useChatContext();
+  const currentConversationId = useChatStore((state) => state.currentConversationId);
+  const streamingMessage = useChatStore((state) => state.streamingMessage);
+  const isStreaming = useChatStore((state) => state.isStreaming);
+
+  const setMessages = useChatStore((state) => state.setMessages);
+  const setMessagesLoading = useChatStore((state) => state.setMessagesLoading);
+  const addMessage = useChatStore((state) => state.addMessage);
+  const updateMessageId = useChatStore((state) => state.updateMessageId);
+  const setStreamingMessage = useChatStore((state) => state.setStreamingMessage);
+  const setIsStreaming = useChatStore((state) => state.setIsStreaming);
+  const appendStreamingContent = useChatStore((state) => state.appendStreamingContent);
+  const appendThinkingContent = useChatStore((state) => state.appendThinkingContent);
 
   /** 获取消息列表 */
   const fetchMessages = useCallback(async (conversationId: string, beforeMessageId?: string) => {
-    dispatch({ type: 'SET_MESSAGES_LOADING', payload: { conversationId, loading: true } });
+    setMessagesLoading(conversationId, true);
 
     try {
       const res = await chatApi.fetchMessages(conversationId, beforeMessageId);
-      if (res.code === 200) {
+      if (res.code === 200 && res.data) {
         const { rows, hasMore } = res.data;
-        dispatch({
-          type: 'SET_MESSAGES',
-          payload: { conversationId, messages: rows },
-        });
+        setMessages(conversationId, rows);
         return { messages: rows, hasMore };
       }
       return { messages: [], hasMore: false };
@@ -147,13 +150,13 @@ export const useMessages = () => {
       console.error('Failed to fetch messages:', error);
       return { messages: [], hasMore: false };
     } finally {
-      dispatch({ type: 'SET_MESSAGES_LOADING', payload: { conversationId, loading: false } });
+      setMessagesLoading(conversationId, false);
     }
-  }, [dispatch]);
+  }, [setMessages, setMessagesLoading]);
 
   /** 发送消息（流式） */
   const sendMessage = useCallback(async (data: SendMessageRequest, onEvent?: (event: SSEEvent) => void) => {
-    // 优先使用传入的 conversationId，否则使用 context 中的 currentConversationId
+    // 优先使用传入的 conversationId，否则使用 store 中的 currentConversationId
     const targetConversationId = data.conversationId || currentConversationId;
     if (!targetConversationId) {
       throw new Error('No current conversation');
@@ -178,89 +181,79 @@ export const useMessages = () => {
       })) || [],
       createTime: new Date().toISOString(),
     };
-    dispatch({
-      type: 'ADD_MESSAGE',
-      payload: { conversationId: targetConversationId, message: userMessage },
-    });
+    addMessage(targetConversationId, userMessage);
 
     // 发起流式请求
     const cancelStream = chatApi.sendMessageStream(
       { ...data, conversationId: targetConversationId },
       (event) => {
+        // 从 store 中获取最新的 streamingMessage，避免闭包陷阱
+        const currentStreamingMessage = useChatStore.getState().streamingMessage;
+
         // 处理 SSE 事件
         switch (event.type) {
           case 'message_start':
             // 更新临时用户消息ID为后端返回的实际ID
-            dispatch({
-              type: 'UPDATE_MESSAGE_ID',
-              payload: {
-                conversationId: targetConversationId,
-                oldMessageId: tempId,
-                newMessageId: event.data.userMessageId,
-              },
-            });
+            updateMessageId(
+              targetConversationId,
+              tempId,
+              event.data.userMessageId,
+            );
             // 设置流式AI消息
-            dispatch({
-              type: 'SET_STREAMING_MESSAGE',
-              payload: {
-                messageId: event.data.assistantMessageId,  // 使用 assistantMessageId
-                conversationId: event.data.conversationId,   // 使用后端返回的 conversationId
-                role: 'assistant',
-                content: '',
-                attachments: [],
-                createTime: new Date().toISOString(),
-                isStreaming: true,
-              } as Message,
-            });
-            dispatch({ type: 'SET_IS_STREAMING', payload: true });
+            setStreamingMessage({
+              messageId: event.data.assistantMessageId,  // 使用 assistantMessageId
+              conversationId: event.data.conversationId,   // 使用后端返回的 conversationId
+              role: 'assistant',
+              content: '',
+              attachments: [],
+              createTime: new Date().toISOString(),
+              isStreaming: true,
+            } as Message);
+            setIsStreaming(true);
             break;
 
           case 'content_delta':
-            dispatch({ type: 'APPEND_STREAMING_CONTENT', payload: event.data.content });
+            appendStreamingContent(event.data.content);
             break;
 
           case 'thinking_start':
-            if (streamingMessage) {
-              dispatch({
-                type: 'SET_STREAMING_MESSAGE',
-                payload: { ...streamingMessage, thinkingContent: '' },
-              });
+            // 使用最新的 streamingMessage
+            const thinkingMsg = useChatStore.getState().streamingMessage;
+            if (thinkingMsg) {
+              setStreamingMessage({ ...thinkingMsg, thinkingContent: '' });
             }
             break;
 
           case 'thinking_delta':
-            dispatch({ type: 'APPEND_THINKING_CONTENT', payload: event.data.content });
+            appendThinkingContent(event.data.content);
             break;
 
           case 'thinking_end':
             break;
 
           case 'message_end':
-            if (streamingMessage && targetConversationId) {
+            // 使用最新的 streamingMessage，避免闭包陷阱导致消息丢失
+            const finalMessage = useChatStore.getState().streamingMessage;
+            if (finalMessage && targetConversationId) {
               const completedMessage: Message = {
-                ...streamingMessage,
-                content: streamingMessage.content,
+                ...finalMessage,
+                content: finalMessage.content,
                 tokensUsed: event.data.tokensUsed,
                 isStreaming: false,
               };
-              dispatch({
-                type: 'ADD_MESSAGE',
-                payload: { conversationId: targetConversationId, message: completedMessage },
-              });
+              addMessage(targetConversationId, completedMessage);
             }
-            dispatch({ type: 'SET_STREAMING_MESSAGE', payload: null });
-            dispatch({ type: 'SET_IS_STREAMING', payload: false });
+            setStreamingMessage(null);
+            setIsStreaming(false);
             break;
 
           case 'error':
             console.error('SSE Error:', event.data);
-            if (streamingMessage) {
-              dispatch({
-                type: 'SET_STREAMING_MESSAGE',
-                payload: { ...streamingMessage, hasError: true },
-              });
+            const errorMsg = useChatStore.getState().streamingMessage;
+            if (errorMsg) {
+              setStreamingMessage({ ...errorMsg, hasError: true });
             }
-            dispatch({ type: 'SET_IS_STREAMING', payload: false });
+            setIsStreaming(false);
             break;
         }
 
@@ -268,7 +261,7 @@ export const useMessages = () => {
       },
       (error) => {
         console.error('Stream error:', error);
-        dispatch({ type: 'SET_IS_STREAMING', payload: false });
+        setIsStreaming(false);
       },
       () => {
         // Stream completed
@@ -277,20 +270,22 @@ export const useMessages = () => {
     );
 
     return cancelStream;
-  }, [currentConversationId, dispatch, streamingMessage]);
+  }, [currentConversationId, addMessage, updateMessageId, setStreamingMessage, setIsStreaming, appendStreamingContent, appendThinkingContent]);
 
   /** 停止生成 */
   const stopGeneration = useCallback(async () => {
-    if (streamingMessage) {
+    // 从 store 中获取最新的 streamingMessage，避免闭包陷阱
+    const currentStreamingMessage = useChatStore.getState().streamingMessage;
+    if (currentStreamingMessage) {
       try {
-        await chatApi.stopMessageGeneration(streamingMessage.messageId);
+        await chatApi.stopMessageGeneration(currentStreamingMessage.messageId);
       } catch (error) {
         console.error('Failed to stop generation:', error);
       }
     }
-    dispatch({ type: 'SET_IS_STREAMING', payload: false });
-    dispatch({ type: 'SET_STREAMING_MESSAGE', payload: null });
-  }, [streamingMessage, dispatch]);
+    setIsStreaming(false);
+    setStreamingMessage(null);
+  }, [setIsStreaming, setStreamingMessage]);
 
   /** 重新生成 */
   const regenerate = useCallback(async (messageId: string, modelId?: string) => {
@@ -301,56 +296,52 @@ export const useMessages = () => {
         // 处理 SSE 事件
         switch (event.type) {
           case 'message_start':
-            dispatch({
-              type: 'SET_STREAMING_MESSAGE',
-              payload: {
-                messageId: event.data.assistantMessageId,  // 使用 assistantMessageId
-                conversationId: event.data.conversationId,   // 使用后端返回的 conversationId
-                role: 'assistant',
-                content: '',
-                attachments: [],
-                createTime: new Date().toISOString(),
-                isStreaming: true,
-              } as Message,
-            });
-            dispatch({ type: 'SET_IS_STREAMING', payload: true });
+            setStreamingMessage({
+              messageId: event.data.assistantMessageId,  // 使用 assistantMessageId
+              conversationId: event.data.conversationId,   // 使用后端返回的 conversationId
+              role: 'assistant',
+              content: '',
+              attachments: [],
+              createTime: new Date().toISOString(),
+              isStreaming: true,
+            } as Message);
+            setIsStreaming(true);
             break;
 
           case 'content_delta':
-            dispatch({ type: 'APPEND_STREAMING_CONTENT', payload: event.data.content });
+            appendStreamingContent(event.data.content);
             break;
 
           case 'message_end':
-            if (streamingMessage && currentConversationId) {
+            // 使用最新的 streamingMessage，避免闭包陷阱导致消息丢失
+            const finalMessage = useChatStore.getState().streamingMessage;
+            if (finalMessage && currentConversationId) {
               const completedMessage: Message = {
-                ...streamingMessage,
-                content: streamingMessage.content,
+                ...finalMessage,
+                content: finalMessage.content,
                 tokensUsed: event.data.tokensUsed,
                 isStreaming: false,
               };
-              dispatch({
-                type: 'ADD_MESSAGE',
-                payload: { conversationId: currentConversationId, message: completedMessage },
-              });
+              addMessage(currentConversationId, completedMessage);
             }
-            dispatch({ type: 'SET_STREAMING_MESSAGE', payload: null });
-            dispatch({ type: 'SET_IS_STREAMING', payload: false });
+            setStreamingMessage(null);
+            setIsStreaming(false);
             break;
 
           case 'error':
             console.error('SSE Error:', event.data);
-            dispatch({ type: 'SET_IS_STREAMING', payload: false });
+            setIsStreaming(false);
             break;
         }
       },
       (error) => {
         console.error('Regenerate stream error:', error);
-        dispatch({ type: 'SET_IS_STREAMING', payload: false });
+        setIsStreaming(false);
       }
     );
 
     return cancelStream;
-  }, [currentConversationId, dispatch, streamingMessage]);
+  }, [currentConversationId, addMessage, setStreamingMessage, setIsStreaming, appendStreamingContent]);
 
   return {
     streamingMessage,
@@ -368,46 +359,41 @@ export const useMessages = () => {
  * 标签操作 Hook
  */
 export const useTags = () => {
-  const { dispatch, tags } = useChatContext();
+  const tags = useChatStore((state) => state.tags);
+  const setTags = useChatStore((state) => state.setTags);
+  const addTag = useChatStore((state) => state.addTag);
+  const removeTag = useChatStore((state) => state.removeTag);
 
   /** 获取标签列表 */
   const fetchTags = useCallback(async () => {
     try {
       const res = await chatApi.fetchTags();
-      if (res.code === 200) {
-        dispatch({ type: 'SET_TAGS', payload: res.data });
+      if (res.code === 200 && res.data) {
+        setTags(res.data);
       }
     } catch (error) {
       console.error('Failed to fetch tags:', error);
     }
-  }, [dispatch]);
+  }, [setTags]);
 
   /** 创建标签 */
   const createTag = useCallback(async (tagName: string, tagColor?: string) => {
-    try {
-      const res = await chatApi.createTag(tagName, tagColor);
-      if (res.code === 200) {
-        dispatch({ type: 'ADD_TAG', payload: res.data });
-        return res.data;
-      }
-      throw new Error(res.msg);
-    } catch (error: any) {
-      throw error;
+    const res = await chatApi.createTag(tagName, tagColor);
+    if (res.code === 200 && res.data) {
+      addTag(res.data);
+      return res.data;
     }
-  }, [dispatch]);
+    throw new Error(res.msg);
+  }, [addTag]);
 
   /** 删除标签 */
   const deleteTags = useCallback(async (tagIds: string[]) => {
-    try {
-      const res = await chatApi.deleteTag(tagIds);
-      if (res.code === 200) {
-        dispatch({ type: 'REMOVE_TAG', payload: tagIds });
-      }
-      return res.data;
-    } catch (error: any) {
-      throw error;
+    const res = await chatApi.deleteTag(tagIds);
+    if (res.code === 200) {
+      removeTag(tagIds);
     }
-  }, [dispatch]);
+    return res.data;
+  }, [removeTag]);
 
   return {
     tags,
@@ -423,44 +409,33 @@ export const useTags = () => {
  * 模型操作 Hook
  */
 export const useModels = () => {
-  const { models, currentModelId, modelConfig, dispatch } = useChatContext();
-
-  /** 设置当前模型 */
-  const setCurrentModel = useCallback((modelId: string) => {
-    dispatch({ type: 'SET_CURRENT_MODEL', payload: modelId });
-  }, [dispatch]);
+  const models = useChatStore((state) => state.models);
+  const currentModelId = useChatStore((state) => state.currentModelId);
+  const modelConfig = useChatStore((state) => state.modelConfig);
+  const setCurrentModel = useChatStore((state) => state.setCurrentModel);
+  const setModelConfig = useChatStore((state) => state.setModelConfig);
 
   /** 获取模型配置 */
   const fetchModelConfig = useCallback(async (modelId: string) => {
     try {
       const res = await chatApi.fetchModelConfig(modelId);
-      if (res.code === 200) {
-        dispatch({
-          type: 'SET_MODEL_CONFIG',
-          payload: { modelId, config: res.data },
-        });
+      if (res.code === 200 && res.data) {
+        setModelConfig(modelId, res.data);
         return res.data;
       }
     } catch (error) {
       console.error('Failed to fetch model config:', error);
     }
-  }, [dispatch]);
+  }, [setModelConfig]);
 
   /** 保存模型配置 */
   const saveModelConfig = useCallback(async (config: ModelConfig) => {
-    try {
-      const res = await chatApi.saveModelConfig(config);
-      if (res.code === 200) {
-        dispatch({
-          type: 'SET_MODEL_CONFIG',
-          payload: { modelId: config.modelId, config },
-        });
-      }
-      return res.data;
-    } catch (error: any) {
-      throw error;
+    const res = await chatApi.saveModelConfig(config);
+    if (res.code === 200) {
+      setModelConfig(config.modelId, config);
     }
-  }, [dispatch]);
+    return res.data;
+  }, [setModelConfig]);
 
   return {
     models,
@@ -478,7 +453,13 @@ export const useModels = () => {
  * UI 状态 Hook
  */
 export const useChatUI = () => {
-  const { toasts, sidebarCollapsed, sidebarVisible, dispatch } = useChatContext();
+  const toasts = useChatStore((state) => state.toasts);
+  const sidebarCollapsed = useChatStore((state) => state.sidebarCollapsed);
+  const sidebarVisible = useChatStore((state) => state.sidebarVisible);
+  const addToast = useChatStore((state) => state.addToast);
+  const removeToast = useChatStore((state) => state.removeToast);
+  const toggleSidebar = useChatStore((state) => state.toggleSidebar);
+  const setSidebarVisible = useChatStore((state) => state.setSidebarVisible);
 
   /** 显示 Toast */
   const showToast = useCallback((
@@ -487,32 +468,14 @@ export const useChatUI = () => {
     duration = 3000,
   ) => {
     const id = Date.now().toString();
-    dispatch({
-      type: 'ADD_TOAST',
-      payload: { id, type, message, duration },
-    });
+    addToast({ id, type, message, duration });
 
     if (duration > 0) {
       setTimeout(() => {
-        dispatch({ type: 'REMOVE_TOAST', payload: id });
+        removeToast(id);
       }, duration);
     }
-  }, [dispatch]);
-
-  /** 移除 Toast */
-  const removeToast = useCallback((id: string) => {
-    dispatch({ type: 'REMOVE_TOAST', payload: id });
-  }, [dispatch]);
-
-  /** 切换侧边栏 */
-  const toggleSidebar = useCallback(() => {
-    dispatch({ type: 'TOGGLE_SIDEBAR' });
-  }, [dispatch]);
-
-  /** 设置侧边栏可见性 */
-  const setSidebarVisible = useCallback((visible: boolean) => {
-    dispatch({ type: 'SET_SIDEBAR_VISIBLE', payload: visible });
-  }, [dispatch]);
+  }, [addToast, removeToast]);
 
   return {
     toasts,

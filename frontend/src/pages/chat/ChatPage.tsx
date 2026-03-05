@@ -7,29 +7,56 @@ import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { MenuOutlined } from '@ant-design/icons';
 import { cn } from '@/utils/cn';
-import { ChatProvider } from './context/ChatContext';
+import { useChatStore } from './store/chatStore';
+import * as chatApi from './services/chatApi';
 import { useConversations, useChatUI } from './hooks/useChatActions';
 import ChatHeader from './components/ChatHeader';
 import Sidebar from './components/Sidebar';
 import ChatArea from './components/ChatArea';
 import './chat.css';
 
-const ChatPageContent: React.FC = () => {
+const ChatPage: React.FC = () => {
   const { conversationId } = useParams<{ conversationId?: string }>();
-  const { fetchConversations, setCurrentConversation } = useConversations();
+  const { setCurrentConversation } = useConversations();
   const { sidebarVisible, toggleSidebar, setSidebarVisible } = useChatUI();
 
-  // 初始化：加载会话列表
+  // Zustand store 初始化
+  const setModels = useChatStore((state) => state.setModels);
+  const setCurrentModel = useChatStore((state) => state.setCurrentModel);
+
+  // 初始化：加载模型列表
   useEffect(() => {
-    fetchConversations();
-  }, [fetchConversations]);
+    const initializeModels = async () => {
+      try {
+        const modelsRes = await chatApi.fetchModels(true);
+        if (modelsRes.code === 200 && modelsRes.data) {
+          setModels(modelsRes.data);
+          if (modelsRes.data.length > 0) {
+            setCurrentModel(modelsRes.data[0].modelCode);
+          } else {
+            // 如果没有启用的模型，设置默认模型
+            setCurrentModel('deepseek-chat');
+          }
+        } else {
+          // 没有数据时设置默认模型
+          setCurrentModel('deepseek-chat');
+        }
+      } catch (error) {
+        console.error('Failed to initialize models:', error);
+        // 加载失败时设置默认模型
+        setCurrentModel('deepseek-chat');
+      }
+    };
+
+    initializeModels();
+  }, [setModels, setCurrentModel]);
 
   // 处理路由参数变化
   useEffect(() => {
     if (conversationId) {
       const id = parseInt(conversationId);
       if (!isNaN(id)) {
-        setCurrentConversation(id);
+        setCurrentConversation(String(id));
       }
     } else {
       // 如果没有 conversationId，可以选择创建新会话或加载最近会话
@@ -92,14 +119,6 @@ const ChatPageContent: React.FC = () => {
         <ChatArea className="flex-1" />
       </div>
     </div>
-  );
-};
-
-const ChatPage: React.FC = () => {
-  return (
-    <ChatProvider>
-      <ChatPageContent />
-    </ChatProvider>
   );
 };
 

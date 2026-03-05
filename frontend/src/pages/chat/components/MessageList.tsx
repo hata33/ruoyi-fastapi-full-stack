@@ -45,7 +45,6 @@ interface MessageItemProps {
 
 const MessageItem: React.FC<MessageItemProps> = ({ message, isStreaming }) => {
   const isUser = message.role === 'user';
-  const [showActions, setShowActions] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
 
   // 复制消息内容
@@ -57,11 +56,8 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isStreaming }) => {
 
   return (
     <div
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
       className={cn(
-        'group relative',
-        'flex items-start space-x-3',
+        'group relative flex items-start space-x-3',
         isUser ? 'flex-row-reverse space-x-reverse' : 'flex-row',
       )}
     >
@@ -86,10 +82,10 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isStreaming }) => {
       >
         <div
           className={cn(
-            'inline-block max-w-[85%] rounded-xl px-4 py-2.5 border',
+            'rounded-xl px-4 py-2.5 border',
             isUser
-              ? 'bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-br-sm'
-              : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-bl-sm',
+              ? 'bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-br-sm max-width: calc(100% - 88px)'
+              : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-bl-sm w-full',
           )}
         >
           {/* Thinking Process (for reasoner model) */}
@@ -108,58 +104,44 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isStreaming }) => {
           {!isStreaming && message.tokensUsed && (
             <div
               className={cn(
-                'flex items-center space-x-2 mt-2 pt-2',
+                'flex items-center justify-between mt-2 pt-2',
                 'border-t border-gray-200 dark:border-gray-700',
               )}
             >
-              <ClockCircleOutlined className="text-xs opacity-70" />
-              <span className="text-xs opacity-70">
-                {new Date(message.createTime).toLocaleTimeString()}
-              </span>
-              {message.tokensUsed && (
-                <>
-                  <span className="opacity-70">·</span>
-                  <span className="text-xs opacity-70">{message.tokensUsed} tokens</span>
-                </>
+              <div className="flex items-center space-x-2">
+                <ClockCircleOutlined className="text-xs opacity-70" />
+                <span className="text-xs opacity-70">
+                  {new Date(message.createTime).toLocaleTimeString()}
+                </span>
+                {message.tokensUsed && (
+                  <>
+                    <span className="opacity-70">·</span>
+                    <span className="text-xs opacity-70">{message.tokensUsed} tokens</span>
+                  </>
+                )}
+              </div>
+
+              {/* Copy Button - Always visible for AI messages */}
+              {!isUser && (
+                <button
+                  onClick={handleCopy}
+                  className={cn(
+                    'flex items-center space-x-1 px-2 py-1 rounded',
+                    'hover:bg-gray-100 dark:hover:bg-gray-700',
+                    'text-gray-500 dark:text-gray-400',
+                    'text-xs transition-colors duration-150',
+                    copied && 'bg-indigo-50 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400',
+                  )}
+                  title={copied ? '已复制' : '复制'}
+                >
+                  <CopyOutlined className="text-xs" />
+                  <span>{copied ? '已复制' : '复制'}</span>
+                </button>
               )}
             </div>
           )}
         </div>
       </div>
-
-      {/* Actions */}
-      {(showActions || message.hasError) && !isStreaming && (
-        <div
-          className={cn(
-            'absolute top-0 flex items-center space-x-1',
-            isUser ? '-left-20' : '-right-20',
-            'opacity-0 group-hover:opacity-100 transition-opacity duration-200',
-          )}
-        >
-          <ActionButton
-            icon={<CopyOutlined />}
-            tooltip="复制"
-            onClick={handleCopy}
-            active={copied}
-          />
-          {!isUser && (
-            <ActionButton
-              icon={<ReloadOutlined />}
-              tooltip="重新生成"
-              onClick={() => {
-                /* TODO: Implement regenerate */
-              }}
-            />
-          )}
-          <ActionButton
-            icon={<DeleteOutlined />}
-            tooltip="删除"
-            onClick={() => {
-              /* TODO: Implement delete */
-            }}
-          />
-        </div>
-      )}
 
       {/* Error Indicator */}
       {message.hasError && (

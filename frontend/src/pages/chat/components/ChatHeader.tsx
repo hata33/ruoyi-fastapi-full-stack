@@ -4,7 +4,8 @@
  */
 
 import React, { useState } from 'react';
-import { SearchOutlined, SettingOutlined, UserOutlined, BulbOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
+import { SearchOutlined, SettingOutlined, UserOutlined, BulbOutlined, HomeOutlined } from '@ant-design/icons';
 import { cn } from '@/utils/cn';
 import { useModels } from '../hooks/useChatActions';
 import ModelSelector from './ModelSelector';
@@ -14,6 +15,7 @@ interface ChatHeaderProps {
 }
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({ className }) => {
+  const navigate = useNavigate();
   const [searchValue, setSearchValue] = useState('');
   const { currentModelId } = useModels();
 
@@ -27,7 +29,12 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ className }) => {
       )}
     >
       {/* Logo */}
-      <div className="flex items-center space-x-3">
+      <div
+        className="flex items-center space-x-3 cursor-pointer"
+        onClick={() => navigate('/')}
+        title="返回首页"
+      >
+        <HomeOutlined className="text-lg text-gray-600 dark:text-gray-300" />
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center">
             <span className="text-gray-700 dark:text-gray-300 text-lg">🤖</span>

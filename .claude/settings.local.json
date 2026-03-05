@@ -47,7 +47,10 @@
       "Bash(uv sync:*)",
       "Bash(psql:*)",
       "Bash(\"D:\\\\Project\\\\ruoyi-fastapi-full-stack\\\\backend\\\\.venv\\\\Scripts\\\\python.exe\":*)",
-      "Bash(cmd.exe /c \"taskkill /F /PID 13808\")"
+      "Bash(cmd.exe /c \"taskkill /F /PID 13808\")",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": [],
     "ask": []

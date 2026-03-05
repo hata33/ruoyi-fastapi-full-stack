@@ -6,7 +6,7 @@
 import React, { useState, useRef, useEffect, KeyboardEvent } from 'react';
 import { PaperClipOutlined, SendOutlined } from '@ant-design/icons';
 import { cn } from '@/utils/cn';
-import { useChatContext } from '../context/ChatContext';
+import { useChatStore } from '../store/chatStore';
 import { useMessages } from '../hooks/useChatActions';
 import type { SendMessageRequest } from '../types';
 
@@ -15,7 +15,8 @@ interface InputAreaProps {
 }
 
 const InputArea: React.FC<InputAreaProps> = ({ onSendMessage: externalOnSendMessage }) => {
-  const { currentConversationId, currentModelId } = useChatContext();
+  const currentConversationId = useChatStore((state) => state.currentConversationId);
+  const currentModelId = useChatStore((state) => state.currentModelId);
   const { sendMessage: defaultSendMessage } = useMessages();
   const [inputValue, setInputValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -41,7 +42,7 @@ const InputArea: React.FC<InputAreaProps> = ({ onSendMessage: externalOnSendMess
     if (!content) return;
 
     const messageData: SendMessageRequest = {
-      conversationId: currentConversationId || 0, // 如果没有会话ID，会在 ChatArea 中自动创建
+      conversationId: currentConversationId || '', // 如果没有会话ID，会在 ChatArea 中自动创建
       content,
       modelId: currentModelId,
     };
