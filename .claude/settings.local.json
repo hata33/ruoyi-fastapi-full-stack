@@ -50,7 +50,9 @@
       "Bash(cmd.exe /c \"taskkill /F /PID 13808\")",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(pnpm tsc:*)",
+      "Bash(pnpm vite:*)"
     ],
     "deny": [],
     "ask": []

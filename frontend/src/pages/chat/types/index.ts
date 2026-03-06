@@ -124,7 +124,7 @@ export interface Message {
 
 /** 发送消息请求 */
 export interface SendMessageRequest {
-  conversationId: string;
+  conversationId?: string;
   content: string;
   modelId?: string;
   enableSearch?: boolean;

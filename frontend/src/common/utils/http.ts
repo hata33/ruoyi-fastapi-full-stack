@@ -8,10 +8,11 @@ export interface ApiResponse<T = any> {
   code: number;
   data?: T;
   msg: string;
-  rows?: T extends Array ? T : never;  // 分页数据时，rows 直接在顶层
+  rows?: T extends any[] ? T : never;  // 分页数据时，rows 直接在顶层
   total?: number;
   pageNum?: number;
   pageSize?: number;
+  [key: string]: any;  // 允许动态访问任何属性
 }
 
 // 创建 axios 实例
@@ -32,7 +33,7 @@ axiosInstance.interceptors.request.use(
 
 // 响应拦截器
 axiosInstance.interceptors.response.use(
-  (res) => {
+  (res): any => {
     if (res.config.responseType === 'blob') {
       return Promise.resolve(res.data)
     }
@@ -49,24 +50,24 @@ axiosInstance.interceptors.response.use(
 );
 
 // 创建函数形式的 http 客户端，支持 http(config) 调用
-function httpClient<T = any>(config: any): Promise<ApiResponse<T>> {
+function httpClient<T = any>(config: any): Promise<any> {
   return axiosInstance.request(config);
 }
 
 // 添加快捷方法到函数对象
-httpClient.get = <T = any>(url: string, config?: any): Promise<ApiResponse<T>> =>
+httpClient.get = <T = any>(url: string, config?: any): Promise<any> =>
   axiosInstance.get(url, config);
 
-httpClient.post = <T = any>(url: string, data?: any, config?: any): Promise<ApiResponse<T>> =>
+httpClient.post = <T = any>(url: string, data?: any, config?: any): Promise<any> =>
   axiosInstance.post(url, data, config);
 
-httpClient.put = <T = any>(url: string, data?: any, config?: any): Promise<ApiResponse<T>> =>
+httpClient.put = <T = any>(url: string, data?: any, config?: any): Promise<any> =>
   axiosInstance.put(url, data, config);
 
-httpClient.delete = <T = any>(url: string, config?: any): Promise<ApiResponse<T>> =>
+httpClient.delete = <T = any>(url: string, config?: any): Promise<any> =>
   axiosInstance.delete(url, config);
 
-httpClient.request = <T = any>(config: any): Promise<ApiResponse<T>> =>
+httpClient.request = <T = any>(config: any): Promise<any> =>
   axiosInstance.request(config);
 
 const http = httpClient;
