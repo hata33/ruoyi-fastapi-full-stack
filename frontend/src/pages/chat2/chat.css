@@ -1,0 +1,60 @@
+/**
+ * Chat Module Global Styles
+ * 聊天模块全局样式
+ */
+
+/* 滚动条样式 - 2px 灰色简约风格 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* 避免无效滚动条 */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* 1px 细线边框通用类 */
+.border-thin {
+  border: 1px solid #e5e7eb;
+}
+
+.dark .border-thin {
+  border-color: #374151;
+}
+
+/* 简约灰色系 */
+.bg-gray-subtle {
+  background-color: #f9fafb;
+}
+
+.dark .bg-gray-subtle {
+  background-color: #1f2937;
+}

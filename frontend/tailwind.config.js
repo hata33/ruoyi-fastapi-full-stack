@@ -8,6 +8,28 @@ export default {
     extend: {
       // 自定义颜色扩展
       colors: {
+        // 新拟物风格色彩系统
+        soft: {
+          bg: {
+            light: '#e8eef5',
+            DEFAULT: '#e8eef5',
+            dark: '#1a1f2c',
+          },
+          element: {
+            light: '#e8eef5',
+            DEFAULT: '#e8eef5',
+            dark: '#242b3d',
+          },
+          text: {
+            light: '#5a6b7c',
+            DEFAULT: '#5a6b7c',
+            dark: '#8b9bb3',
+          },
+          accent: {
+            DEFAULT: '#6b7fd7',
+            hover: '#5a6bc4',
+          },
+        },
         primary: {
           50: '#f0f9ff',
           100: '#e0f2fe',
@@ -113,10 +135,28 @@ export default {
         'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
         'medium': '0 4px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
         'large': '0 10px 40px -10px rgba(0, 0, 0, 0.15), 0 20px 20px -10px rgba(0, 0, 0, 0.04)',
+        // 新拟物风格阴影 - 亮色模式
+        'neu-sm': '6px 6px 12px rgba(163, 177, 198, 0.4), -6px -6px 12px rgba(255, 255, 255, 0.8)',
+        'neu': '8px 8px 16px rgba(163, 177, 198, 0.5), -8px -8px 16px rgba(255, 255, 255, 0.9)',
+        'neu-lg': '12px 12px 24px rgba(163, 177, 198, 0.6), -12px -12px 24px rgba(255, 255, 255, 1)',
+        'neu-inset-sm': 'inset 4px 4px 8px rgba(163, 177, 198, 0.4), inset -4px -4px 8px rgba(255, 255, 255, 0.8)',
+        'neu-inset': 'inset 6px 6px 12px rgba(163, 177, 198, 0.5), inset -6px -6px 12px rgba(255, 255, 255, 0.9)',
+        // 新拟物风格阴影 - 暗色模式
+        'neu-sm-dark': '6px 6px 12px rgba(0, 0, 0, 0.4), -6px -6px 12px rgba(66, 71, 82, 0.4)',
+        'neu-dark': '8px 8px 16px rgba(0, 0, 0, 0.5), -8px -8px 16px rgba(66, 71, 82, 0.5)',
+        'neu-lg-dark': '12px 12px 24px rgba(0, 0, 0, 0.6), -12px -12px 24px rgba(66, 71, 82, 0.6)',
+        'neu-inset-sm-dark': 'inset 4px 4px 8px rgba(0, 0, 0, 0.4), inset -4px -4px 8px rgba(66, 71, 82, 0.4)',
+        'neu-inset-dark': 'inset 6px 6px 12px rgba(0, 0, 0, 0.5), inset -6px -6px 12px rgba(66, 71, 82, 0.5)',
       },
       // 自定义圆角
       borderRadius: {
         '4xl': '2rem',
+        // 新拟物风格圆角
+        'neu-sm': '0.75rem',
+        'neu': '1rem',
+        'neu-lg': '1.25rem',
+        'neu-xl': '1.5rem',
+        'neu-2xl': '1.75rem',
       },
     },
   },

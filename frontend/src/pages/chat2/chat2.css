@@ -1,0 +1,373 @@
+/**
+ * Chat2 Module Global Styles - 新拟物风格
+ * 聊天模块全局样式
+ */
+
+/* ==================== 新拟物风格滚动条 ==================== */
+
+/* 亮色模式滚动条 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d9e6;
+  border-radius: 4px;
+  box-shadow:
+    inset 1px 1px 2px rgba(163, 177, 198, 0.4),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.8);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #c5cdd8;
+}
+
+/* 暗色模式滚动条 */
+.dark ::-webkit-scrollbar-thumb {
+  background: #3a4150;
+  box-shadow:
+    inset 1px 1px 2px rgba(0, 0, 0, 0.4),
+    inset -1px -1px 2px rgba(66, 71, 82, 0.4);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #454d5e;
+}
+
+/* ==================== 隐藏滚动条 ==================== */
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ==================== 新拟物风格全局样式 ==================== */
+
+/* 背景渐变 - 亮色模式 */
+.chat2-neu-bg {
+  background: linear-gradient(145deg, #e8eef5 0%, #e0e6ed 100%);
+}
+
+/* 暗色模式背景渐变 */
+.dark .chat2-neu-bg {
+  background: linear-gradient(145deg, #1a1f2c 0%, #151922 100%);
+}
+
+/* 新拟物卡片效果 */
+.chat2-neu-card {
+  background: #e8eef5;
+  box-shadow:
+    8px 8px 16px rgba(163, 177, 198, 0.5),
+    -8px -8px 16px rgba(255, 255, 255, 0.9);
+  border-radius: 1.5rem;
+}
+
+.dark .chat2-neu-card {
+  background: #242b3d;
+  box-shadow:
+    8px 8px 16px rgba(0, 0, 0, 0.5),
+    -8px -8px 16px rgba(66, 71, 82, 0.5);
+}
+
+/* 新拟物按钮效果 - 凸起 */
+.chat2-neu-btn {
+  background: #e8eef5;
+  box-shadow:
+    6px 6px 12px rgba(163, 177, 198, 0.4),
+    -6px -6px 12px rgba(255, 255, 255, 0.8);
+  border-radius: 1rem;
+  transition: all 0.2s ease-out;
+}
+
+.chat2-neu-btn:hover {
+  box-shadow:
+    8px 8px 16px rgba(163, 177, 198, 0.5),
+    -8px -8px 16px rgba(255, 255, 255, 0.9);
+}
+
+.chat2-neu-btn:active {
+  box-shadow:
+    inset 4px 4px 8px rgba(163, 177, 198, 0.4),
+    inset -4px -4px 8px rgba(255, 255, 255, 0.8);
+}
+
+.dark .chat2-neu-btn {
+  background: #242b3d;
+  box-shadow:
+    6px 6px 12px rgba(0, 0, 0, 0.4),
+    -6px -6px 12px rgba(66, 71, 82, 0.4);
+}
+
+.dark .chat2-neu-btn:hover {
+  box-shadow:
+    8px 8px 16px rgba(0, 0, 0, 0.5),
+    -8px -8px 16px rgba(66, 71, 82, 0.5);
+}
+
+.dark .chat2-neu-btn:active {
+  box-shadow:
+    inset 4px 4px 8px rgba(0, 0, 0, 0.4),
+    inset -4px -4px 8px rgba(66, 71, 82, 0.4);
+}
+
+/* 新拟物输入框效果 - 凹陷 */
+.chat2-neu-input {
+  background: #e8eef5;
+  box-shadow:
+    inset 4px 4px 8px rgba(163, 177, 198, 0.4),
+    inset -4px -4px 8px rgba(255, 255, 255, 0.8);
+  border-radius: 0.75rem;
+  transition: box-shadow 0.2s ease-out;
+}
+
+.chat2-neu-input:focus {
+  box-shadow:
+    inset 6px 6px 12px rgba(163, 177, 198, 0.5),
+    inset -6px -6px 12px rgba(255, 255, 255, 0.9);
+  outline: none;
+}
+
+.dark .chat2-neu-input {
+  background: #242b3d;
+  box-shadow:
+    inset 4px 4px 8px rgba(0, 0, 0, 0.4),
+    inset -4px -4px 8px rgba(66, 71, 82, 0.4);
+}
+
+.dark .chat2-neu-input:focus {
+  box-shadow:
+    inset 6px 6px 12px rgba(0, 0, 0, 0.5),
+    inset -6px -6px 12px rgba(66, 71, 82, 0.5);
+}
+
+/* ==================== 文字颜色 ==================== */
+
+.chat2-text-primary {
+  color: #5a6b7c;
+}
+
+.dark .chat2-text-primary {
+  color: #8b9bb3;
+}
+
+.chat2-text-secondary {
+  color: #5a6b7c;
+  opacity: 0.8;
+}
+
+.dark .chat2-text-secondary {
+  color: #8b9bb3;
+  opacity: 0.8;
+}
+
+/* ==================== 强调色 ==================== */
+
+.chat2-accent {
+  background-color: #6b7fd7;
+}
+
+.chat2-accent:hover {
+  background-color: #5a6bc4;
+}
+
+/* ==================== 消息气泡样式 ==================== */
+
+/* 用户消息 - 凸起效果 */
+.chat2-user-message {
+  background: #e8eef5;
+  box-shadow:
+    6px 6px 12px rgba(163, 177, 198, 0.4),
+    -6px -6px 12px rgba(255, 255, 255, 0.8);
+  border-radius: 1rem;
+  border-top-right-radius: 0.5rem;
+}
+
+.dark .chat2-user-message {
+  background: #242b3d;
+  box-shadow:
+    6px 6px 12px rgba(0, 0, 0, 0.4),
+    -6px -6px 12px rgba(66, 71, 82, 0.4);
+}
+
+/* AI 消息 - 轻微凹陷效果 */
+.chat2-ai-message {
+  background: #e8eef5;
+  box-shadow:
+    inset 3px 3px 6px rgba(163, 177, 198, 0.3),
+    inset -3px -3px 6px rgba(255, 255, 255, 0.7);
+  border-radius: 1rem;
+  border-top-left-radius: 0.5rem;
+}
+
+.dark .chat2-ai-message {
+  background: #242b3d;
+  box-shadow:
+    inset 3px 3px 6px rgba(0, 0, 0, 0.3),
+    inset -3px -3px 6px rgba(66, 71, 82, 0.3);
+}
+
+/* ==================== 侧边栏样式 ==================== */
+
+.chat2-sidebar {
+  background: linear-gradient(180deg, #e8eef5 0%, #e0e6ed 100%);
+}
+
+.dark .chat2-sidebar {
+  background: linear-gradient(180deg, #1a1f2c 0%, #151922 100%);
+}
+
+/* 会话列表项 */
+.chat2-conversation-item {
+  background: #e8eef5;
+  box-shadow:
+    4px 4px 8px rgba(163, 177, 198, 0.3),
+    -4px -4px 8px rgba(255, 255, 255, 0.6);
+  border-radius: 0.75rem;
+  transition: all 0.2s ease-out;
+}
+
+.chat2-conversation-item:hover {
+  box-shadow:
+    6px 6px 12px rgba(163, 177, 198, 0.4),
+    -6px -6px 12px rgba(255, 255, 255, 0.8);
+}
+
+.chat2-conversation-item.active {
+  box-shadow:
+    inset 3px 3px 6px rgba(163, 177, 198, 0.3),
+    inset -3px -3px 6px rgba(255, 255, 255, 0.7);
+}
+
+.dark .chat2-conversation-item {
+  background: #242b3d;
+  box-shadow:
+    4px 4px 8px rgba(0, 0, 0, 0.3),
+    -4px -4px 8px rgba(66, 71, 82, 0.3);
+}
+
+.dark .chat2-conversation-item:hover {
+  box-shadow:
+    6px 6px 12px rgba(0, 0, 0, 0.4),
+    -6px -6px 12px rgba(66, 71, 82, 0.4);
+}
+
+.dark .chat2-conversation-item.active {
+  box-shadow:
+    inset 3px 3px 6px rgba(0, 0, 0, 0.3),
+    inset -3px -3px 6px rgba(66, 71, 82, 0.3);
+}
+
+/* ==================== 头部样式 ==================== */
+
+.chat2-header {
+  background: #e8eef5;
+  box-shadow:
+    0 4px 8px rgba(163, 177, 198, 0.3),
+    0 -2px 4px rgba(255, 255, 255, 0.8);
+}
+
+.dark .chat2-header {
+  background: #242b3d;
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    0 -2px 4px rgba(66, 71, 82, 0.3);
+}
+
+/* ==================== 图标按钮样式 ==================== */
+
+.chat2-icon-btn {
+  background: #e8eef5;
+  box-shadow:
+    4px 4px 8px rgba(163, 177, 198, 0.3),
+    -4px -4px 8px rgba(255, 255, 255, 0.6);
+  border-radius: 0.75rem;
+  transition: all 0.2s ease-out;
+}
+
+.chat2-icon-btn:hover {
+  box-shadow:
+    6px 6px 12px rgba(163, 177, 198, 0.4),
+    -6px -6px 12px rgba(255, 255, 255, 0.8);
+}
+
+.chat2-icon-btn:active {
+  box-shadow:
+    inset 3px 3px 6px rgba(163, 177, 198, 0.3),
+    inset -3px -3px 6px rgba(255, 255, 255, 0.7);
+}
+
+.dark .chat2-icon-btn {
+  background: #242b3d;
+  box-shadow:
+    4px 4px 8px rgba(0, 0, 0, 0.3),
+    -4px -4px 8px rgba(66, 71, 82, 0.3);
+}
+
+.dark .chat2-icon-btn:hover {
+  box-shadow:
+    6px 6px 12px rgba(0, 0, 0, 0.4),
+    -6px -6px 12px rgba(66, 71, 82, 0.4);
+}
+
+.dark .chat2-icon-btn:active {
+  box-shadow:
+    inset 3px 3px 6px rgba(0, 0, 0, 0.3),
+    inset -3px -3px 6px rgba(66, 71, 82, 0.3);
+}
+
+/* ==================== 动画效果 ==================== */
+
+.chat2-animate-fade-in {
+  animation: chat2FadeIn 0.3s ease-out;
+}
+
+@keyframes chat2FadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chat2-animate-slide-in {
+  animation: chat2SlideIn 0.3s ease-out;
+}
+
+@keyframes chat2SlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ==================== 响应式调整 ==================== */
+
+@media (max-width: 767px) {
+  .chat2-neu-card {
+    border-radius: 1rem;
+  }
+
+  .chat2-neu-btn {
+    border-radius: 0.875rem;
+  }
+
+  .chat2-neu-input {
+    border-radius: 0.625rem;
+  }
+}

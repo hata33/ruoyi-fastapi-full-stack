@@ -44,6 +44,7 @@ export const COMPONENT_MAP: Record<string, React.ComponentType> = {
 
   // ==================== Chat模块 ====================
   'chat': lazy(() => import('@/pages/chat/ChatPage')),
+  'chat2': lazy(() => import('@/pages/chat2/ChatPage')),
 };
 
 /**
@@ -56,6 +57,10 @@ export const ROUTE_PATTERN_MAP: Record<string, {
 }> = {
   'chat': {
     component: lazy(() => import('@/pages/chat/ChatPage')),
+    extractParam: 'conversationId',
+  },
+  'chat2': {
+    component: lazy(() => import('@/pages/chat2/ChatPage')),
     extractParam: 'conversationId',
   },
 };

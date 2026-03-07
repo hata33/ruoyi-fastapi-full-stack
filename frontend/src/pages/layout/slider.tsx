@@ -96,7 +96,12 @@ const staticMenus: MenuItem[] = [
       {
         key: "/chat",
         icon: <icons.WechatOutlined />,
-        label: "新建对话",
+        label: "标准对话",
+      },
+      {
+        key: "/chat2",
+        icon: <icons.BulbOutlined />,
+        label: "新拟物风格",
       },
     ],
   },
@@ -115,8 +120,8 @@ const Slider: FC = () => {
 
   const handleMenuClick = useCallback((key: string) => {
     // 聊天菜单在新标签页打开全屏页面
-    if (key === '/chat') {
-      window.open('/chat', '_blank');
+    if (key === '/chat' || key === '/chat2') {
+      window.open(key, '_blank');
       return;
     }
     // 其他路由正常导航

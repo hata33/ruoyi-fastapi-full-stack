@@ -18,6 +18,7 @@ import PageLoading from "@/components/page-loading/page-loading";
 const Login = lazy(() => import("@/pages/login/login"));
 const Userinfo = lazy(() => import('@/pages/userinfo.tsx'));
 const ChatPage = lazy(() => import('@/pages/chat/ChatPage'));
+const Chat2Page = lazy(() => import('@/pages/chat2/ChatPage'));
 
 // ==================== 硬编码的基础路由 ====================
 
@@ -48,6 +49,14 @@ const FULLSCREEN_ROUTES = [
   {
     path: "chat/:conversationId",  // 支持动态会话ID
     element: <ChatPage />,
+  },
+  {
+    path: "chat2",
+    element: <Chat2Page />,
+  },
+  {
+    path: "chat2/:conversationId",  // 支持动态会话ID
+    element: <Chat2Page />,
   },
 ];
 
@@ -164,6 +173,22 @@ const Router: FC = () => {
         element: isLogin ? (
           <Suspense fallback={<PageLoading />}>
             <ChatPage />
+          </Suspense>
+        ) : <Navigate to="/login" />,
+      },
+      {
+        path: "/chat2",
+        element: isLogin ? (
+          <Suspense fallback={<PageLoading />}>
+            <Chat2Page />
+          </Suspense>
+        ) : <Navigate to="/login" />,
+      },
+      {
+        path: "/chat2/:conversationId",
+        element: isLogin ? (
+          <Suspense fallback={<PageLoading />}>
+            <Chat2Page />
           </Suspense>
         ) : <Navigate to="/login" />,
       },
